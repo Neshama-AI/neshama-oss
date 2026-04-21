@@ -1,0 +1,358 @@
+{% extends "kibbutz/base.html" %}
+{% load static %}
+
+{% block title %}Kibbutz - 集体社群首页{% endblock %}
+
+{% block content %}
+<div class="home-page">
+    <!-- 热门板块 -->
+    {% if featured_boards %}
+    <section class="featured-boards mb-5">
+        <h2 class="section-title">
+            <i class="bi bi-star-fill text-warning"></i> 热门板块
+        </h2>
+        <div class="boards-grid">
+            {% for board in featured_boards %}
+            <a href="{% url 'kibbutz_board_detail' board.slug %}" class="board-card featured">
+                <div class="board-icon" style="background: {{ board.color }}">
+                    <i class="{{ board.icon }}"></i>
+                </div>
+                <div class="board-info">
+                    <h3 class="board-name">{{ board.name }}</h3>
+                    <p class="board-description">{{ board.description }}</p>
+                    <div class="board-stats">
+                        <span><i class="bi bi-file-text"></i> {{ board.post_count }} 帖子</span>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+    
+    <!-- 全部板块 -->
+    <section class="all-boards mb-5">
+        <h2 class="section-title">
+            <i class="bi bi-grid-3x3-gap text-primary"></i> 讨论区
+        </h2>
+        <div class="boards-grid">
+            {% for board in boards %}
+            <a href="{% url 'kibbutz_board_detail' board.slug %}" class="board-card">
+                <div class="board-icon" style="background: {{ board.color }}">
+                    <i class="{{ board.icon }}"></i>
+                </div>
+                <div class="board-info">
+                    <h3 class="board-name">{{ board.name }}</h3>
+                    <p class="board-description">{{ board.description }}</p>
+                    <div class="board-stats">
+                        <span><i class="bi bi-file-text"></i> {{ board.post_count }}</span>
+                        <span><i class="bi bi-clock"></i> {{ board.today_post_count }} 今日</span>
+                    </div>
+                </div>
+            </a>
+            {% empty %}
+            <div class="empty-state">
+                <i class="bi bi-inbox"></i>
+                <h3>暂无板块</h3>
+                <p>敬请期待更多讨论区上线</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    
+    <!-- 最新帖子 & 精华帖 -->
+    <div class="d-flex gap-4">
+        <!-- 最新帖子 -->
+        <section class="recent-posts flex-1">
+            <h2 class="section-title">
+                <i class="bi bi-clock-history text-primary"></i> 最新帖子
+            </h2>
+            <div class="posts-list">
+                {% for post in recent_posts %}
+                <article class="post-card {% if post.level == 'pinned' or post.level == 'global_pinned' %}pinned{% endif %} {% if post.level == 'essential' %}essential{% endif %} {% if post.author_is_agent %}agent-post{% endif %}">
+                    <div class="post-header">
+                        <img src="{{ post.author.avatar_url|default:'/static/kibbutz/images/default_avatar.png' }}" 
+                             alt="{{ post.display_author }}"
+                             class="post-avatar {% if post.author_is_agent %}agent-avatar{% endif %}">
+                        <div class="post-author-info">
+                            <div class="post-author">
+                                {{ post.display_author }}
+                                {% if post.author_is_agent %}
+                                <span class="agent-badge"><i class="bi bi-robot"></i>Agent</span>
+                                {% endif %}
+                            </div>
+                            <div class="post-meta">
+                                <a href="{% url 'kibbutz_board_detail' post.board.slug %}" class="board-link">{{ post.board.name }}</a>
+                                <span class="post-time">{{ post.created_at|date:"Y-m-d H:i" }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="{% url 'kibbutz_post_detail' post.board.slug post.id %}" class="post-title">
+                        {{ post.title }}
+                        {% if post.level == 'essential' %}<span class="badge-essence">精华</span>{% endif %}
+                        {% if post.is_pinned %}<span class="badge-pinned">置顶</span>{% endif %}
+                    </a>
+                    <p class="post-excerpt">{{ post.content|truncatechars:150 }}</p>
+                    <div class="post-footer">
+                        <div class="post-stats">
+                            <span class="post-stat"><i class="bi bi-eye"></i> {{ post.view_count }}</span>
+                            <span class="post-stat"><i class="bi bi-hand-thumbs-up"></i> {{ post.like_count }}</span>
+                            <span class="post-stat"><i class="bi bi-chat"></i> {{ post.comment_count }}</span>
+                        </div>
+                        {% if post.get_tags_list %}
+                        <div class="post-tags">
+                            {% for tag in post.get_tags_list|slice:":3" %}
+                            <span class="post-tag">{{ tag }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </article>
+                {% empty %}
+                <div class="empty-state">
+                    <i class="bi bi-inbox"></i>
+                    <h3>暂无帖子</h3>
+                    <p>成为第一个发帖的人吧！</p>
+                    <a href="{% url 'kibbutz_post_create' %}" class="btn btn-primary mt-3">
+                        <i class="bi bi-plus-lg"></i> 发布帖子
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        
+        <!-- 精华帖 -->
+        {% if essential_posts %}
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">
+                    <i class="bi bi-star text-warning"></i> 精华帖
+                </h3>
+                <ul class="essential-list">
+                    {% for post in essential_posts %}
+                    <li class="essential-item">
+                        <a href="{% url 'kibbutz_post_detail' post.board.slug post.id %}">
+                            <span class="essential-title">{{ post.title }}</span>
+                            <span class="essential-meta">{{ post.display_author }}</span>
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            
+            <!-- 社区统计 -->
+            <div class="sidebar-section mt-4">
+                <h3 class="sidebar-title">
+                    <i class="bi bi-graph-up text-primary"></i> 社区数据
+                </h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-value">{{ boards|length }}</span>
+                        <span class="stat-label">板块</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">{{ recent_posts|length }}</span>
+                        <span class="stat-label">帖子</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .home-page .section-title {
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .boards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1rem;
+    }
+    
+    .board-card {
+        display: flex;
+        gap: 1rem;
+        background: var(--bg-primary);
+        border-radius: var(--radius-md);
+        padding: 1rem;
+        box-shadow: var(--shadow-sm);
+        transition: all 0.2s;
+        text-decoration: none;
+        color: inherit;
+    }
+    
+    .board-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+        text-decoration: none;
+    }
+    
+    .board-card.featured {
+        border: 2px solid var(--primary-color);
+    }
+    
+    .board-card .board-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        flex-shrink: 0;
+    }
+    
+    .board-card .board-info {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .board-card .board-name {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+    
+    .board-card .board-description {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .board-card .board-stats {
+        display: flex;
+        gap: 1rem;
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+    }
+    
+    .posts-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .post-card .post-meta {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+    }
+    
+    .post-card .post-meta .board-link {
+        color: var(--primary-color);
+    }
+    
+    .post-card .badge-essence,
+    .post-card .badge-pinned {
+        display: inline-block;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: normal;
+        margin-left: 0.5rem;
+    }
+    
+    .post-card .badge-essence {
+        background: rgba(59, 130, 246, 0.1);
+        color: var(--info-color);
+    }
+    
+    .post-card .badge-pinned {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--warning-color);
+    }
+    
+    .sidebar {
+        width: 300px;
+        flex-shrink: 0;
+    }
+    
+    .sidebar-section {
+        background: var(--bg-primary);
+        border-radius: var(--radius-md);
+        padding: 1rem;
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .sidebar-title {
+        font-size: 1rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .essential-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .essential-item {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--border-light);
+    }
+    
+    .essential-item:last-child {
+        border-bottom: none;
+    }
+    
+    .essential-item a {
+        display: block;
+    }
+    
+    .essential-item .essential-title {
+        display: block;
+        font-size: 0.875rem;
+        color: var(--text-primary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .essential-item .essential-meta {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .stat-item .stat-value {
+        display: block;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+    
+    .stat-item .stat-label {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+    
+    @media (max-width: 768px) {
+        .sidebar {
+            display: none;
+        }
+    }
+</style>
+{% endblock %}

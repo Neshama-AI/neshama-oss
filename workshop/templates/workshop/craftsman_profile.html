@@ -1,0 +1,394 @@
+{% extends "workshop/base.html" %}
+{% load static %}
+
+{% block title %}工匠主页 - {{ craftsman.user.username }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .craftsman-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 40px 0;
+        margin-bottom: 30px;
+    }
+    
+    .craftsman-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        border: 4px solid white;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    
+    .level-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 14px;
+    }
+    
+    .level-novice { background: #e0e0e0; color: #616161; }
+    .level-skilled { background: #4fc3f7; color: white; }
+    .level-master { background: #ffb74d; color: white; }
+    .level-legend { background: linear-gradient(135deg, #f5af19, #f12711); color: white; }
+    
+    .stats-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        transition: transform 0.2s;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-4px);
+    }
+    
+    .stats-value {
+        font-size: 32px;
+        font-weight: 700;
+        color: #333;
+    }
+    
+    .stats-label {
+        color: #888;
+        font-size: 14px;
+        margin-top: 4px;
+    }
+    
+    .skill-card {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        transition: all 0.3s;
+    }
+    
+    .skill-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .skill-icon {
+        width: 100%;
+        height: 140px;
+        object-fit: cover;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    }
+    
+    .skill-card-body {
+        padding: 16px;
+    }
+    
+    .badge-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+        background: white;
+        border-radius: 10px;
+        margin-bottom: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    
+    .badge-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+    }
+    
+    .rarity-1 { background: #e0e0e0; }
+    .rarity-2 { background: #81c784; }
+    .rarity-3 { background: #64b5f6; }
+    .rarity-4 { background: #ba68c8; }
+    .rarity-5 { background: linear-gradient(135deg, #f5af19, #f12711); }
+    
+    .privilege-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .privilege-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: #e8f5e9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+        color: #4caf50;
+    }
+    
+    .pro-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 12px;
+        background: linear-gradient(135deg, #f5af19, #f12711);
+        color: white;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    
+    .promotion-progress {
+        background: #f5f5f5;
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+    
+    .progress-bar-custom {
+        height: 10px;
+        border-radius: 5px;
+        background: #e0e0e0;
+        overflow: hidden;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        border-radius: 5px;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        transition: width 0.5s;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- 工匠头部信息 -->
+<section class="craftsman-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-3 text-center">
+                <img src="{{ craftsman.avatar|default:'https://via.placeholder.com/120' }}" 
+                     alt="{{ craftsman.user.username }}" 
+                     class="craftsman-avatar">
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <h2 class="mb-0">{{ craftsman.user.username }}</h2>
+                    <span class="level-badge level-{{ craftsman.level }}">{{ craftsman.get_level_display }}</span>
+                    {% if craftsman.verified %}
+                    <span class="pro-badge">认证</span>
+                    {% endif %}
+                </div>
+                <p class="mb-2">{{ craftsman.title|default:'暂无称号' }}</p>
+                <p class="mb-3">{{ craftsman.bio|default:'暂无简介' }}</p>
+                <div class="d-flex gap-4">
+                    <span><i class="fas fa-calendar-alt me-1"></i> 加入于 {{ craftsman.created_at|date:"Y-m-d" }}</span>
+                    <span><i class="fas fa-clock me-1"></i> 活跃天数 {{ active_days }} 天</span>
+                </div>
+            </div>
+            <div class="col-md-3 text-end">
+                {% if is_owner %}
+                <a href="{% url 'workshop:craftsman_edit' %}" class="btn btn-light">
+                    <i class="fas fa-edit me-2"></i>编辑资料
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="container">
+    <!-- 数据统计 -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-value">{{ craftsman.skills_count }}</div>
+                <div class="stats-label">技能总数</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-value">{{ craftsman.total_installs }}</div>
+                <div class="stats-label">总安装量</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-value">{{ craftsman.avg_rating|default:"0"|floatformat:1 }}</div>
+                <div class="stats-label">平均评分</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-value">{{ craftsman.total_ratings }}</div>
+                <div class="stats-label">评价总数</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- 左侧内容 -->
+        <div class="col-md-8">
+            <!-- 技能列表 -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-tools me-2"></i>发布的技能</h5>
+                    <span class="badge bg-primary">{{ skills.count }} 个技能</span>
+                </div>
+                <div class="card-body">
+                    {% if skills %}
+                    <div class="row">
+                        {% for skill in skills %}
+                        <div class="col-md-6 mb-3">
+                            <div class="skill-card">
+                                <img src="{{ skill.icon|default:'https://via.placeholder.com/300x140' }}" 
+                                     alt="{{ skill.name }}" 
+                                     class="skill-icon">
+                                <div class="skill-card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="mb-0">{{ skill.name }}</h6>
+                                        {% if skill.is_featured %}
+                                        <span class="badge bg-warning">精选</span>
+                                        {% endif %}
+                                    </div>
+                                    <p class="text-muted small mb-2">{{ skill.short_description|truncatechars:50 }}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="text-warning">
+                                            {% for i in "12345" %}
+                                            <i class="fas fa-star{% if forloop.counter > skill.avg_rating %}-half-alt{% endif %}"></i>
+                                            {% endfor %}
+                                            <span class="text-dark ms-1">{{ skill.avg_rating|floatformat:1 }}</span>
+                                        </div>
+                                        <div>
+                                            <i class="fas fa-download me-1"></i>{{ skill.install_count }}
+                                        </div>
+                                    </div>
+                                    <a href="{% url 'workshop:skill_detail' skill.slug %}" 
+                                       class="btn btn-sm btn-outline-primary w-100 mt-2">
+                                        查看详情
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="fas fa-box-open fa-3x mb-3"></i>
+                        <p>暂无发布的技能</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 近期动态 -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>近期动态</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_activities %}
+                    <div class="timeline">
+                        {% for activity in recent_activities %}
+                        <div class="timeline-item d-flex mb-3">
+                            <div class="timeline-marker bg-{{ activity.type }}"></div>
+                            <div class="timeline-content">
+                                <p class="mb-1">{{ activity.description }}</p>
+                                <small class="text-muted">{{ activity.created_at|timesince }}前</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">暂无动态</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 侧边栏 -->
+        <div class="col-md-4">
+            <!-- 徽章展示 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-medal me-2"></i>获得的徽章</h5>
+                </div>
+                <div class="card-body">
+                    {% if badges %}
+                    {% for badge in badges %}
+                    <div class="badge-card">
+                        <div class="badge-icon rarity-{{ badge.badge.rarity }}">
+                            <i class="fas fa-award"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">{{ badge.badge.name }}</h6>
+                            <small class="text-muted">{{ badge.badge.description }}</small>
+                            <div class="text-muted small">
+                                获得于 {{ badge.earned_at|date:"Y-m-d" }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <p class="text-muted text-center">暂无徽章</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 当前等级权益 -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-crown me-2"></i>{{ craftsman.get_level_display }}权益</h5>
+                </div>
+                <div class="card-body">
+                    {% for key, value in privileges.items %}
+                    <div class="privilege-item">
+                        <div class="privilege-icon">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <div>
+                            <div class="fw-medium">{{ key|privilege_name }}</div>
+                            <small class="text-muted">{{ value|privilege_value }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- 晋升进度 -->
+            <div class="promotion-progress">
+                <h6 class="mb-3">
+                    <i class="fas fa-arrow-up me-2"></i>晋升到 {{ next_level_name }}
+                </h6>
+                
+                {% if promotion_info.can_promote %}
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>恭喜！已达到晋升条件
+                </div>
+                {% else %}
+                <div class="mb-3">
+                    <small class="text-muted">完成度</small>
+                    <div class="progress-bar-custom">
+                        <div class="progress-fill" style="width: {{ promotion_info.progress }}%"></div>
+                    </div>
+                    <small class="text-muted">{{ promotion_info.progress }}%</small>
+                </div>
+                
+                <div class="small">
+                    {% for check_name, passed in promotion_info.checks.items %}
+                    <div class="d-flex justify-content-between py-1">
+                        <span>{{ check_name|check_name }}</span>
+                        <span class="{% if passed %}text-success{% else %}text-danger{% endif %}">
+                            {% if passed %}<i class="fas fa-check"></i>{% else %}<i class="fas fa-times"></i>{% endif %}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

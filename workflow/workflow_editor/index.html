@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neshama Workflow Editor</title>
+    <link rel="stylesheet" href="css/editor.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Toolbar -->
+        <header class="toolbar">
+            <div class="toolbar-left">
+                <div class="logo">
+                    <span class="logo-icon">◇</span>
+                    <span class="logo-text">Neshama</span>
+                </div>
+                <div class="workflow-name">
+                    <input type="text" id="workflowName" value="未命名工作流" placeholder="工作流名称">
+                </div>
+            </div>
+            <div class="toolbar-center">
+                <button class="toolbar-btn" id="btnUndo" title="撤销">
+                    <span>↶</span>
+                </button>
+                <button class="toolbar-btn" id="btnRedo" title="重做">
+                    <span>↷</span>
+                </button>
+                <div class="toolbar-divider"></div>
+                <button class="toolbar-btn" id="btnZoomOut" title="缩小">
+                    <span>−</span>
+                </button>
+                <span class="zoom-level" id="zoomLevel">100%</span>
+                <button class="toolbar-btn" id="btnZoomIn" title="放大">
+                    <span>+</span>
+                </button>
+                <button class="toolbar-btn" id="btnZoomReset" title="重置缩放">
+                    <span>⊙</span>
+                </button>
+            </div>
+            <div class="toolbar-right">
+                <button class="toolbar-btn" id="btnTemplates" title="模板">
+                    <span>📋</span> 模板
+                </button>
+                <button class="toolbar-btn" id="btnExport" title="导出">
+                    <span>↓</span> 导出
+                </button>
+                <button class="toolbar-btn" id="btnImport" title="导入">
+                    <span>↑</span> 导入
+                </button>
+                <div class="toolbar-divider"></div>
+                <button class="toolbar-btn primary" id="btnSave" title="保存">
+                    <span>💾</span> 保存
+                </button>
+                <button class="toolbar-btn success" id="btnRun" title="运行">
+                    <span>▶</span> 运行
+                </button>
+            </div>
+        </header>
+
+        <div class="main-container">
+            <!-- Left Panel - Node Palette -->
+            <aside class="node-palette">
+                <div class="panel-header">
+                    <h3>节点</h3>
+                </div>
+                <div class="node-list">
+                    <div class="node-category">
+                        <h4>触发器</h4>
+                        <div class="node-item" draggable="true" data-type="trigger" data-subtype="schedule">
+                            <div class="node-icon schedule">⏰</div>
+                            <span>定时触发</span>
+                        </div>
+                        <div class="node-item" draggable="true" data-type="trigger" data-subtype="event">
+                            <div class="node-icon event">⚡</div>
+                            <span>事件触发</span>
+                        </div>
+                        <div class="node-item" draggable="true" data-type="trigger" data-subtype="webhook">
+                            <div class="node-icon webhook">🪝</div>
+                            <span>Webhook</span>
+                        </div>
+                    </div>
+                    
+                    <div class="node-category">
+                        <h4>动作</h4>
+                        <div class="node-item" draggable="true" data-type="action" data-subtype="send_message">
+                            <div class="node-icon action">💬</div>
+                            <span>发送消息</span>
+                        </div>
+                        <div class="node-item" draggable="true" data-type="action" data-subtype="call_skill">
+                            <div class="node-icon action">🎯</div>
+                            <span>调用技能</span>
+                        </div>
+                        <div class="node-item" draggable="true" data-type="action" data-subtype="get_info">
+                            <div class="node-icon action">🔍</div>
+                            <span>获取信息</span>
+                        </div>
+                        <div class="node-item" draggable="true" data-type="action" data-subtype="generate">
+                            <div class="node-icon action">✨</div>
+                            <span>生成内容</span>
+                        </div>
+                        <div class="node-item" draggable="true" data-type="action" data-subtype="api">
+                            <div class="node-icon action">🌐</div>
+                            <span>调用API</span>
+                        </div>
+                    </div>
+                    
+                    <div class="node-category">
+                        <h4>条件</h4>
+                        <div class="node-item" draggable="true" data-type="condition" data-subtype="if">
+                            <div class="node-icon condition">❓</div>
+                            <span>IF 分支</span>
+                        </div>
+                        <div class="node-item" draggable="true" data-type="condition" data-subtype="loop">
+                            <div class="node-icon condition">🔄</div>
+                            <span>循环</span>
+                        </div>
+                        <div class="node-item" draggable="true" data-type="condition" data-subtype="delay">
+                            <div class="node-icon condition">⏱️</div>
+                            <span>延时</span>
+                        </div>
+                    </div>
+                    
+                    <div class="node-category">
+                        <h4>转换</h4>
+                        <div class="node-item" draggable="true" data-type="transform" data-subtype="assign">
+                            <div class="node-icon transform">📝</div>
+                            <span>变量赋值</span>
+                        </div>
+                        <div class="node-item" draggable="true" data-type="transform" data-subtype="format">
+                            <div class="node-icon transform">🔄</div>
+                            <span>格式转换</span>
+                        </div>
+                        <div class="node-item" draggable="true" data-type="transform" data-subtype="extract">
+                            <div class="node-icon transform">🎯</div>
+                            <span>数据提取</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Canvas -->
+            <main class="canvas-container">
+                <div class="canvas" id="canvas">
+                    <svg class="connections-layer" id="connectionsLayer">
+                        <defs>
+                            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#6366f1"/>
+                            </marker>
+                        </defs>
+                    </svg>
+                    <div class="nodes-layer" id="nodesLayer"></div>
+                    <div class="grid-pattern"></div>
+                </div>
+                
+                <!-- Mini Map -->
+                <div class="mini-map" id="miniMap">
+                    <div class="mini-map-viewport" id="miniMapViewport"></div>
+                </div>
+                
+                <!-- Zoom Controls -->
+                <div class="zoom-controls">
+                    <button class="zoom-btn" id="btnFitView" title="适应视图">
+                        <span>⊞</span>
+                    </button>
+                </div>
+            </main>
+
+            <!-- Right Panel - Properties -->
+            <aside class="properties-panel" id="propertiesPanel">
+                <div class="panel-header">
+                    <h3>属性</h3>
+                    <button class="panel-close" id="btnCloseProperties">×</button>
+                </div>
+                <div class="panel-content" id="propertiesContent">
+                    <div class="empty-state">
+                        <p>选择节点以编辑属性</p>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <!-- Context Menu -->
+        <div class="context-menu" id="contextMenu">
+            <div class="context-menu-item" data-action="copy">
+                <span>📋</span> 复制
+            </div>
+            <div class="context-menu-item" data-action="paste">
+                <span>📥</span> 粘贴
+            </div>
+            <div class="context-menu-divider"></div>
+            <div class="context-menu-item" data-action="delete">
+                <span>🗑️</span> 删除
+            </div>
+        </div>
+
+        <!-- Modal - Templates -->
+        <div class="modal" id="modalTemplates">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>选择模板</h2>
+                    <button class="modal-close">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="template-grid" id="templateGrid">
+                        <!-- Templates will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal - Node Config -->
+        <div class="modal" id="modalNodeConfig">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modalNodeTitle">节点配置</h2>
+                    <button class="modal-close">×</button>
+                </div>
+                <div class="modal-body" id="modalNodeBody">
+                    <!-- Node config form will be inserted here -->
+                </div>
+                <div class="modal-footer">
+                    <button class="btn secondary" id="btnCancelNodeConfig">取消</button>
+                    <button class="btn primary" id="btnSaveNodeConfig">保存</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notifications -->
+        <div class="toast-container" id="toastContainer"></div>
+
+        <!-- Hidden file input for import -->
+        <input type="file" id="fileImport" accept=".json,.yaml" style="display: none;">
+    </div>
+
+    <script src="js/editor.js"></script>
+    <script src="js/canvas.js"></script>
+    <script src="js/nodes/trigger.js"></script>
+    <script src="js/nodes/action.js"></script>
+    <script src="js/nodes/condition.js"></script>
+    <script src="js/nodes/transform.js"></script>
+</body>
+</html>

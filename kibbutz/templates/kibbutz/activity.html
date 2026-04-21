@@ -1,0 +1,292 @@
+{% extends "kibbutz/base.html" %}
+
+{% block title %}活动中心 - Kibbutz{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'kibbutz/css/activity.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="activity-center">
+    <!-- 页面头部 -->
+    <header class="page-header">
+        <div class="header-content">
+            <h1><i class="bi bi-calendar-event"></i> 活动中心</h1>
+            <p>参与精彩活动赢取奖励</p>
+        </div>
+        
+        {% if user.is_authenticated %}
+        <div class="header-actions">
+            {% if can_create %}
+            <a href="{% url 'kibbutz_activity_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> 创建活动
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </header>
+    
+    <!-- 活动筛选 -->
+    <div class="activity-filters">
+        <button class="filter-btn active" data-filter="all">
+            <i class="bi bi-grid-3x3"></i> 全部
+        </button>
+        <button class="filter-btn" data-filter="ongoing">
+            <i class="bi bi-play-circle"></i> 进行中
+        </button>
+        <button class="filter-btn" data-filter="upcoming">
+            <i class="bi bi-clock"></i> 即将开始
+        </button>
+        <button class="filter-btn" data-filter="ended">
+            <i class="bi bi-check-circle"></i> 已结束
+        </button>
+        <button class="filter-btn" data-filter="participated">
+            <i class="bi bi-person-check"></i> 我参与的
+        </button>
+    </div>
+    
+    <!-- 进行中的活动 -->
+    {% if ongoing_activities %}
+    <section class="activity-section">
+        <h2><i class="bi bi-fire"></i> 进行中的活动</h2>
+        
+        <div class="activities-grid">
+            {% for activity in ongoing_activities %}
+            <article class="activity-card featured" data-activity-id="{{ activity.id }}">
+                <div class="activity-cover" style="background: {{ activity.cover_color }};">
+                    {% if activity.cover_image %}
+                    <img src="{{ activity.cover_image }}" alt="">
+                    {% endif %}
+                    <div class="activity-type-badge">
+                        <i class="bi {{ activity.type_icon }}"></i>
+                        {{ activity.get_type_display }}
+                    </div>
+                </div>
+                
+                <div class="activity-content">
+                    <h3 class="activity-title">
+                        <a href="{% url 'kibbutz_activity_detail' activity.id %}">
+                            {{ activity.title }}
+                        </a>
+                    </h3>
+                    
+                    <p class="activity-description">
+                        {{ activity.description|truncatechars:100 }}
+                    </p>
+                    
+                    <div class="activity-meta">
+                        <div class="meta-item">
+                            <i class="bi bi-calendar3"></i>
+                            <span>{{ activity.start_time|date:"m月d日" }} - {{ activity.end_time|date:"m月d日" }}</span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="bi bi-people"></i>
+                            <span>{{ activity.participant_count }}人参与</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 进度条 -->
+                    {% if activity.type == 'challenge' %}
+                    <div class="activity-progress">
+                        <div class="progress-info">
+                            <span>当前进度</span>
+                            <span>{{ activity.user_progress|default:0 }}/{{ activity.target_count }}</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" 
+                                 style="width: {{ activity.progress_percent }}%;"></div>
+                        </div>
+                    </div>
+                    {% elif activity.type == 'vote' %}
+                    <div class="vote-preview">
+                        <span>剩余时间: {{ activity.end_time|timeuntil }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="activity-actions">
+                        {% if activity.user_participated %}
+                        <button class="btn btn-sm btn-success" disabled>
+                            <i class="bi bi-check"></i> 已参加
+                        </button>
+                        {% else %}
+                        <a href="{% url 'kibbutz_activity_detail' activity.id %}" 
+                           class="btn btn-sm btn-primary">
+                            立即参与
+                        </a>
+                        {% endif %}
+                        
+                        <span class="reward-hint">
+                            <i class="bi bi-gift"></i>
+                            最高 {{ activity.max_reward }} 积分
+                        </span>
+                    </div>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+    
+    <!-- 即将开始 -->
+    {% if upcoming_activities %}
+    <section class="activity-section">
+        <h2><i class="bi bi-clock"></i> 即将开始</h2>
+        
+        <div class="activities-list">
+            {% for activity in upcoming_activities %}
+            <article class="activity-item" data-activity-id="{{ activity.id }}">
+                <div class="activity-date">
+                    <span class="date-day">{{ activity.start_time|date:"d" }}</span>
+                    <span class="date-month">{{ activity.start_time|date:"m月" }}</span>
+                </div>
+                
+                <div class="activity-info">
+                    <h3>
+                        <a href="{% url 'kibbutz_activity_detail' activity.id %}">
+                            {{ activity.title }}
+                        </a>
+                    </h3>
+                    <p>{{ activity.description|truncatechars:80 }}</p>
+                    <div class="activity-tags">
+                        <span class="tag"><i class="bi bi-tag"></i> {{ activity.get_type_display }}</span>
+                        <span class="tag"><i class="bi bi-people"></i> {{ activity.expected_participants }}人</span>
+                    </div>
+                </div>
+                
+                <div class="activity-action">
+                    {% if activity.registration_required %}
+                    <button class="btn btn-outline btn-sm register-btn"
+                            data-activity-id="{{ activity.id }}">
+                        立即报名
+                    </button>
+                    {% else %}
+                    <span class="countdown" data-start="{{ activity.start_time.isoformat }}">
+                        <i class="bi bi-hourglass-split"></i>
+                        <span class="countdown-text">等待开始</span>
+                    </span>
+                    {% endif %}
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+    
+    <!-- 往期精彩 -->
+    {% if ended_activities %}
+    <section class="activity-section">
+        <h2><i class="bi bi-archive"></i> 往期精彩</h2>
+        
+        <div class="activities-grid ended">
+            {% for activity in ended_activities %}
+            <article class="activity-card ended" data-activity-id="{{ activity.id }}">
+                <div class="activity-cover" style="background: {{ activity.cover_color }};">
+                    <div class="ended-badge">
+                        <i class="bi bi-archive"></i> 已结束
+                    </div>
+                </div>
+                
+                <div class="activity-content">
+                    <h3 class="activity-title">
+                        <a href="{% url 'kibbutz_activity_result' activity.id %}">
+                            {{ activity.title }}
+                        </a>
+                    </h3>
+                    
+                    <div class="activity-meta">
+                        <span><i class="bi bi-people"></i> {{ activity.participant_count }}人参与</span>
+                        <span><i class="bi bi-award"></i> 已发放奖励</span>
+                    </div>
+                    
+                    {% if activity.user_won %}
+                    <div class="winner-badge">
+                        <i class="bi bi-trophy-fill"></i> 你获奖了！
+                    </div>
+                    {% endif %}
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+    
+    <!-- 活动日历 -->
+    <aside class="activity-calendar">
+        <h3><i class="bi bi-calendar-month"></i> 活动日历</h3>
+        <div class="calendar-grid" id="activity-calendar">
+            <!-- 由 JS 动态渲染 -->
+        </div>
+    </aside>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 筛选切换
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            const filter = this.dataset.filter;
+            document.querySelectorAll('.activity-card, .activity-item').forEach(item => {
+                const status = item.dataset.status;
+                if (filter === 'all' || status === filter) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    });
+    
+    // 报名按钮
+    document.querySelectorAll('.register-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const activityId = this.dataset.activityId;
+            // 发送报名请求
+            fetch(`/kibbutz/api/activity/${activityId}/register/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    this.textContent = '已报名';
+                    this.disabled = true;
+                    this.classList.remove('btn-outline');
+                    this.classList.add('btn-success');
+                }
+            });
+        });
+    });
+    
+    // 倒计时更新
+    function updateCountdowns() {
+        document.querySelectorAll('.countdown').forEach(el => {
+            const startTime = new Date(el.dataset.start);
+            const now = new Date();
+            const diff = startTime - now;
+            
+            if (diff <= 0) {
+                el.querySelector('.countdown-text').textContent = '已开始';
+                return;
+            }
+            
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            
+            let text = '';
+            if (days > 0) text += `${days}天`;
+            text += `${hours}小时后开始`;
+            
+            el.querySelector('.countdown-text').textContent = text;
+        });
+    }
+    
+    updateCountdowns();
+    setInterval(updateCountdowns, 60000); // 每分钟更新
+});
+</script>
+{% endblock %}

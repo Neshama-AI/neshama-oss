@@ -1,0 +1,152 @@
+{% extends "kibbutz/base.html" %}
+
+{% block title %}话题广场 - Kibbutz{% endblock %}
+
+{% block content %}
+<div class="topic-square">
+    <!-- 话题广场头部 -->
+    <header class="square-header">
+        <h1><i class="bi bi-hash"></i> 话题广场</h1>
+        <p>发现热门话题，参与社区讨论</p>
+    </header>
+    
+    <!-- 热门话题 -->
+    <section class="trending-topics">
+        <h2><i class="bi bi-fire"></i> 热门话题</h2>
+        
+        <div class="trending-list">
+            {% for topic in trending_topics %}
+            <a href="{% url 'kibbutz_topic_detail' topic.name %}" 
+               class="trending-item">
+                <div class="trending-rank">#{{ forloop.counter }}</div>
+                <div class="trending-info">
+                    <h3 class="trending-name">#{{ topic.name }}#</h3>
+                    <div class="trending-stats">
+                        <span>{{ topic.post_count }} 帖子</span>
+                        <span class="separator">·</span>
+                        <span>{{ topic.participant_count }} 人参与</span>
+                    </div>
+                </div>
+                <div class="trending-hot">
+                    <i class="bi bi-thermometer-half"></i>
+                    {{ topic.hot_score }}
+                </div>
+            </a>
+            {% empty %}
+            <div class="empty-state">
+                <p>暂无热门话题</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    
+    <!-- 话题分类 -->
+    <section class="topic-categories">
+        <h2>话题分类</h2>
+        
+        <div class="category-tabs">
+            <button class="tab-btn active" data-category="all">全部</button>
+            {% for category in categories %}
+            <button class="tab-btn" data-category="{{ category.id }}">
+                {{ category.name }}
+            </button>
+            {% endfor %}
+        </div>
+    </section>
+    
+    <!-- 全部话题 -->
+    <section class="all-topics">
+        <div class="topics-grid">
+            {% for topic in all_topics %}
+            <a href="{% url 'kibbutz_topic_detail' topic.name %}" 
+               class="topic-card">
+                <div class="topic-header">
+                    <i class="bi bi-hash"></i>
+                    <h3>{{ topic.name }}</h3>
+                </div>
+                
+                <div class="topic-stats">
+                    <div class="stat">
+                        <span class="stat-value">{{ topic.post_count }}</span>
+                        <span class="stat-label">帖子</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-value">{{ topic.today_count }}</span>
+                        <span class="stat-label">今日</span>
+                    </div>
+                </div>
+                
+                {% if topic.latest_post %}
+                <div class="topic-latest">
+                    <img src="{{ topic.latest_post.author.avatar_url }}" 
+                         alt="" class="latest-avatar">
+                    <span class="latest-title">{{ topic.latest_post.title|truncatechars:30 }}</span>
+                </div>
+                {% endif %}
+            </a>
+            {% empty %}
+            <div class="empty-state">
+                <i class="bi bi-chat-square-text"></i>
+                <p>暂无话题</p>
+            </div>
+            {% endfor %}
+        </div>
+        
+        {% if has_more %}
+        <div class="pagination">
+            {% if all_topics.has_previous %}
+            <a href="?page={{ all_topics.previous_page_number }}" 
+               class="btn btn-outline">
+                上一页
+            </a>
+            {% endif %}
+            
+            <span class="page-info">
+                第 {{ all_topics.number }} / {{ all_topics.paginator.num_pages }} 页
+            </span>
+            
+            {% if all_topics.has_next %}
+            <a href="?page={{ all_topics.next_page_number }}" 
+               class="btn btn-outline">
+                下一页
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </section>
+    
+    <!-- 创建话题提示 -->
+    <aside class="create-tip">
+        <div class="tip-card">
+            <h4><i class="bi bi-lightbulb"></i> 如何使用话题</h4>
+            <ul>
+                <li>发帖时添加 <code>#话题名称#</code> 即可关联话题</li>
+                <li>话题会自动分类，便于发现和参与</li>
+                <li>热门话题会出现在广场首页</li>
+            </ul>
+        </div>
+    </aside>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 分类标签切换
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            const category = this.dataset.category;
+            // 过滤话题（实际应由后端处理）
+            document.querySelectorAll('.topic-card').forEach(card => {
+                if (category === 'all') {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = card.dataset.category === category ? 'block' : 'none';
+                }
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

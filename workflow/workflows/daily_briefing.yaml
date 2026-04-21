@@ -1,0 +1,83 @@
+name: 每日简报
+description: 每天早上8点自动获取天气和日程，生成个性化简报
+version: 1.0.0
+author: Neshama Team
+
+trigger:
+  type: schedule
+  cron: "0 8 * * *"
+  timezone: Asia/Shanghai
+
+nodes:
+  - id: trigger_check
+    type: trigger
+    name: 定时触发
+
+  - id: get_weather
+    type: action
+    name: 获取天气
+    action: get_weather
+    params:
+      city: ${user.city}
+      days: 1
+
+  - id: get_schedule
+    type: action
+    name: 获取日程
+    action: get_schedule
+    params:
+      scope: today
+
+  - id: get_news
+    type: action
+    name: 获取新闻
+    action: get_news
+    params:
+      category: top
+      limit: 5
+
+  - id: format_briefing
+    type: transform
+    name: 格式化简报
+    transform: template
+    params:
+      template: |
+        ☀️ 早安！今日简报
+        ─────────────
+        天气: {{weather}}
+        温度: {{temperature}}
+        
+        📅 今日日程:
+        {{#each schedule}}
+        • {{time}} {{title}}
+        {{/each}}
+        
+        📰 今日新闻:
+        {{#each news}}
+        • {{title}}
+        {{/each}}
+
+  - id: send_message
+    type: action
+    name: 发送消息
+    action: send_message
+    params:
+      channel: ${user.preferred_channel}
+      template: ${format_briefing.output}
+
+edges:
+  - from: trigger_check
+    to: get_weather
+    label: 开始
+
+  - from: get_weather
+    to: get_schedule
+
+  - from: get_schedule
+    to: get_news
+
+  - from: get_news
+    to: format_briefing
+
+  - from: format_briefing
+    to: send_message

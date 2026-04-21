@@ -1,0 +1,502 @@
+{% extends "workshop/base.html" %}
+{% load static %}
+
+{% block title %}工匠排行榜 - Workshop{% endblock %}
+
+{% block extra_css %}
+<style>
+    .leaderboard-hero {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        padding: 50px 0;
+        margin-bottom: 40px;
+    }
+    
+    .board-tabs {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+    }
+    
+    .board-tab {
+        padding: 12px 24px;
+        border-radius: 30px;
+        background: white;
+        border: 2px solid #e0e0e0;
+        color: #666;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-weight: 500;
+    }
+    
+    .board-tab:hover {
+        border-color: #667eea;
+        color: #667eea;
+    }
+    
+    .board-tab.active {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-color: transparent;
+        color: white;
+    }
+    
+    .rank-card {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 16px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+    
+    .rank-card:hover {
+        transform: translateX(8px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+    }
+    
+    .rank-number {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+    
+    .rank-1 {
+        background: linear-gradient(135deg, #ffd700, #ffb347);
+        color: white;
+        box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+    }
+    
+    .rank-2 {
+        background: linear-gradient(135deg, #c0c0c0, #a0a0a0);
+        color: white;
+        box-shadow: 0 4px 15px rgba(192, 192, 192, 0.4);
+    }
+    
+    .rank-3 {
+        background: linear-gradient(135deg, #cd7f32, #b8860b);
+        color: white;
+        box-shadow: 0 4px 15px rgba(205, 127, 50, 0.4);
+    }
+    
+    .rank-other {
+        background: #f5f5f5;
+        color: #666;
+    }
+    
+    .rank-avatar {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid white;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .rank-info {
+        flex: 1;
+    }
+    
+    .rank-name {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 4px;
+    }
+    
+    .rank-meta {
+        color: #888;
+        font-size: 14px;
+    }
+    
+    .level-badge {
+        display: inline-flex;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    
+    .level-novice { background: #e0e0e0; color: #616161; }
+    .level-skilled { background: #4fc3f7; color: white; }
+    .level-master { background: #ffb74d; color: white; }
+    .level-legend { background: linear-gradient(135deg, #f5af19, #f12711); color: white; }
+    
+    .rank-stats {
+        text-align: right;
+        min-width: 120px;
+    }
+    
+    .stat-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: #333;
+    }
+    
+    .stat-label {
+        font-size: 12px;
+        color: #888;
+    }
+    
+    .trend-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 8px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    
+    .trend-up {
+        background: #e8f5e9;
+        color: #4caf50;
+    }
+    
+    .trend-down {
+        background: #ffebee;
+        color: #f44336;
+    }
+    
+    .trend-new {
+        background: #e3f2fd;
+        color: #2196f3;
+    }
+    
+    .filter-bar {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    .filter-select {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 8px 16px;
+        min-width: 150px;
+    }
+    
+    .time-filter {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .time-btn {
+        padding: 8px 16px;
+        border: 1px solid #e0e0e0;
+        border-radius: 20px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .time-btn.active {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+    
+    .crown-icon {
+        position: absolute;
+        top: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    
+    .top-three-container {
+        position: relative;
+    }
+    
+    .podium-card {
+        background: white;
+        border-radius: 16px;
+        padding: 30px 20px;
+        text-align: center;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        transition: transform 0.3s;
+    }
+    
+    .podium-card:hover {
+        transform: translateY(-8px);
+    }
+    
+    .podium-rank {
+        font-size: 48px;
+        margin-bottom: 10px;
+    }
+    
+    .podium-avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        border: 4px solid;
+        margin: 0 auto 15px;
+    }
+    
+    .podium-1 .podium-avatar { border-color: #ffd700; }
+    .podium-2 .podium-avatar { border-color: #c0c0c0; }
+    .podium-3 .podium-avatar { border-color: #cd7f32; }
+    
+    .podium-name {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+    
+    .podium-stat {
+        font-size: 28px;
+        font-weight: 700;
+        color: #667eea;
+    }
+    
+    .podium-stat-label {
+        font-size: 12px;
+        color: #888;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- 页面标题 -->
+<section class="leaderboard-hero">
+    <div class="container text-center">
+        <h1 class="mb-3"><i class="fas fa-trophy me-3"></i>工匠排行榜</h1>
+        <p class="mb-0 opacity-75">发现最优秀的创作者，见证卓越的诞生</p>
+    </div>
+</section>
+
+<div class="container">
+    <!-- 排行榜类型切换 -->
+    <div class="board-tabs">
+        <button class="board-tab {% if board_type == 'installs' %}active{% endif %}" 
+                onclick="switchBoard('installs')">
+            <i class="fas fa-fire me-2"></i>安装量榜
+        </button>
+        <button class="board-tab {% if board_type == 'rating' %}active{% endif %}" 
+                onclick="switchBoard('rating')">
+            <i class="fas fa-star me-2"></i>评分榜
+        </button>
+        <button class="board-tab {% if board_type == 'revenue' %}active{% endif %}" 
+                onclick="switchBoard('revenue')">
+            <i class="fas fa-coins me-2"></i>收入榜
+        </button>
+        <button class="board-tab {% if board_type == 'quality' %}active{% endif %}" 
+                onclick="switchBoard('quality')">
+            <i class="fas fa-gem me-2"></i>质量榜
+        </button>
+        <button class="board-tab {% if board_type == 'newcomer' %}active{% endif %}" 
+                onclick="switchBoard('newcomer')">
+            <i class="fas fa-rocket me-2"></i>新锐榜
+        </button>
+    </div>
+    
+    <!-- 筛选栏 -->
+    <div class="filter-bar">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div class="time-filter">
+                <button class="time-btn {% if time_range == 'weekly' %}active{% endif %}" 
+                        onclick="switchTime('weekly')">本周</button>
+                <button class="time-btn {% if time_range == 'monthly' %}active{% endif %}" 
+                        onclick="switchTime('monthly')">本月</button>
+                <button class="time-btn {% if time_range == 'quarterly' %}active{% endif %}" 
+                        onclick="switchTime('quarterly')">本季</button>
+                <button class="time-btn {% if time_range == 'all_time' %}active{% endif %}" 
+                        onclick="switchTime('all_time')">总榜</button>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+                <label class="text-muted">分类:</label>
+                <select class="filter-select" onchange="switchCategory(this.value)">
+                    <option value="">全部分类</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.slug }}" {% if category == cat.slug %}selected{% endif %}>
+                        {{ cat.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 前三名展示 -->
+    {% if rankings and rankings|length >= 3 %}
+    <div class="row mb-5 top-three-container">
+        <!-- 第二名 -->
+        <div class="col-md-4">
+            <div class="podium-card podium-2">
+                <div class="podium-rank">🥈</div>
+                <img src="{{ rankings.1.craftsman.avatar|default:'https://via.placeholder.com/100' }}" 
+                     alt="{{ rankings.1.craftsman.username }}" 
+                     class="podium-avatar">
+                <div class="podium-name">{{ rankings.1.craftsman.username }}</div>
+                <span class="level-badge level-{{ rankings.1.craftsman.level }}">
+                    {{ rankings.1.craftsman.level|level_name }}
+                </span>
+                <div class="mt-3">
+                    <div class="podium-stat">{{ rankings.1.installs|default:rankings.1.revenue|default:rankings.1.rating }}</div>
+                    <div class="podium-stat-label">{{ board_type|stat_label }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 第一名 -->
+        <div class="col-md-4">
+            <div class="podium-card podium-1" style="margin-top: -30px;">
+                <div class="crown-icon">👑</div>
+                <div class="podium-rank">🥇</div>
+                <img src="{{ rankings.0.craftsman.avatar|default:'https://via.placeholder.com/100' }}" 
+                     alt="{{ rankings.0.craftsman.username }}" 
+                     class="podium-avatar">
+                <div class="podium-name">{{ rankings.0.craftsman.username }}</div>
+                <span class="level-badge level-{{ rankings.0.craftsman.level }}">
+                    {{ rankings.0.craftsman.level|level_name }}
+                </span>
+                <div class="mt-3">
+                    <div class="podium-stat">{{ rankings.0.installs|default:rankings.0.revenue|default:rankings.0.rating }}</div>
+                    <div class="podium-stat-label">{{ board_type|stat_label }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 第三名 -->
+        <div class="col-md-4">
+            <div class="podium-card podium-3">
+                <div class="podium-rank">🥉</div>
+                <img src="{{ rankings.2.craftsman.avatar|default:'https://via.placeholder.com/100' }}" 
+                     alt="{{ rankings.2.craftsman.username }}" 
+                     class="podium-avatar">
+                <div class="podium-name">{{ rankings.2.craftsman.username }}</div>
+                <span class="level-badge level-{{ rankings.2.craftsman.level }}">
+                    {{ rankings.2.craftsman.level|level_name }}
+                </span>
+                <div class="mt-3">
+                    <div class="podium-stat">{{ rankings.2.installs|default:rankings.2.revenue|default:rankings.2.rating }}</div>
+                    <div class="podium-stat-label">{{ board_type|stat_label }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- 完整排行榜 -->
+    <div class="rankings-list">
+        {% for item in rankings %}
+        {% if forloop.counter > 3 %}
+        <div class="rank-card" onclick="location.href='{% url 'workshop:craftsman_profile' item.craftsman.id %}'">
+            <div class="rank-number rank-{% if item.rank <= 3 %}{{ item.rank }}{% else %}other{% endif %}">
+                {{ item.rank }}
+            </div>
+            <img src="{{ item.craftsman.avatar|default:'https://via.placeholder.com/64' }}" 
+                 alt="{{ item.craftsman.username }}" 
+                 class="rank-avatar">
+            <div class="rank-info">
+                <div class="rank-name">
+                    {{ item.craftsman.username }}
+                    {% if item.craftsman.verified %}
+                    <i class="fas fa-check-circle text-primary ms-1"></i>
+                    {% endif %}
+                </div>
+                <div class="rank-meta">
+                    <span class="level-badge level-{{ item.craftsman.level }}">
+                        {{ item.craftsman.level|level_name }}
+                    </span>
+                    <span class="ms-2">
+                        <i class="fas fa-tools me-1"></i>{{ item.skills_count|default:1 }}个技能
+                    </span>
+                </div>
+            </div>
+            <div class="rank-stats">
+                <div class="stat-value">
+                    {{ item.installs|default:item.revenue|default:item.rating|floatformat:1 }}
+                </div>
+                <div class="stat-label">{{ board_type|stat_label }}</div>
+                {% if item.trend %}
+                <span class="trend-badge {% if item.trend == 'up' %}trend-up{% elif item.trend == 'down' %}trend-down{% else %}trend-new{% endif %}">
+                    {% if item.trend == 'up' %}<i class="fas fa-arrow-up me-1"></i>上升
+                    {% elif item.trend == 'down' %}<i class="fas fa-arrow-down me-1"></i>下降
+                    {% else %}<i class="fas fa-star me-1"></i>新上榜
+                    {% endif %}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        {% empty %}
+        <div class="text-center py-5">
+            <i class="fas fa-trophy fa-4x text-muted mb-4"></i>
+            <h4 class="text-muted">暂无排名数据</h4>
+            <p class="text-muted">成为第一个上榜的创作者吧！</p>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- 分页 -->
+    {% if paginator %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if rankings.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?board={{ board_type }}&time={{ time_range }}&page=1">首页</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?board={{ board_type }}&time={{ time_range }}&page={{ rankings.previous_page_number }}">上一页</a>
+            </li>
+            {% endif %}
+            
+            {% for num in paginator.page_range %}
+            <li class="page-item {% if num == rankings.number %}active{% endif %}">
+                <a class="page-link" href="?board={{ board_type }}&time={{ time_range }}&page={{ num }}">{{ num }}</a>
+            </li>
+            {% endfor %}
+            
+            {% if rankings.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?board={{ board_type }}&time={{ time_range }}&page={{ rankings.next_page_number }}">下一页</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?board={{ board_type }}&time={{ time_range }}&page={{ paginator.num_pages }}">末页</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function switchBoard(boardType) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('board', boardType);
+    url.searchParams.delete('page');
+    window.location.href = url.toString();
+}
+
+function switchTime(timeRange) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('time', timeRange);
+    url.searchParams.delete('page');
+    window.location.href = url.toString();
+}
+
+function switchCategory(category) {
+    const url = new URL(window.location.href);
+    if (category) {
+        url.searchParams.set('category', category);
+    } else {
+        url.searchParams.delete('category');
+    }
+    url.searchParams.delete('page');
+    window.location.href = url.toString();
+}
+</script>
+{% endblock %}

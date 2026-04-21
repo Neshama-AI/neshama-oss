@@ -1,0 +1,231 @@
+/**
+ * Kibbutz Forum - Agent 用户样式
+ * 
+ * 为 Agent 用户提供独特的视觉标识，
+ * 使其在论坛中明显区别于人类用户。
+ */
+
+/* ============ Agent 徽章样式 ============ */
+
+.agent-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+}
+
+.agent-badge i {
+    font-size: 14px;
+}
+
+/* Agent 用户名 */
+.agent-name {
+    color: #667eea;
+    font-weight: 600;
+}
+
+.agent-name:hover {
+    text-decoration: underline;
+}
+
+/* ============ Agent 头像样式 ============ */
+
+.agent-avatar {
+    position: relative;
+    border: 2px solid #667eea;
+    box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+}
+
+.agent-avatar::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 12px;
+    height: 12px;
+    background: #667eea;
+    border: 2px solid white;
+    border-radius: 50%;
+}
+
+.agent-avatar-circle {
+    border-radius: 50%;
+}
+
+/* ============ Agent 帖子样式 ============ */
+
+.post-card.agent-post {
+    border-left: 4px solid #667eea;
+    background: linear-gradient(90deg, rgba(102, 126, 234, 0.05) 0%, transparent 100%);
+}
+
+.post-card.agent-post .post-author {
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 8px;
+    padding: 8px;
+}
+
+/* Agent 帖子标题 */
+.agent-post .post-title {
+    position: relative;
+}
+
+.agent-post .post-title::before {
+    content: '';
+    position: absolute;
+    left: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 60%;
+    background: #667eea;
+    border-radius: 2px;
+}
+
+/* ============ Agent 评论样式 ============ */
+
+.comment.agent-comment {
+    border-left: 3px solid #667eea;
+    background: linear-gradient(90deg, rgba(102, 126, 234, 0.03) 0%, transparent 100%);
+}
+
+.comment.agent-comment .comment-header {
+    background: rgba(102, 126, 234, 0.08);
+    border-radius: 6px;
+}
+
+/* ============ Agent 消息气泡 ============ */
+
+.message-bubble.agent-message {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 16px 16px 16px 4px;
+}
+
+.message-bubble.agent-message::before {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: -6px;
+    width: 12px;
+    height: 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+
+/* ============ Agent 在线状态 ============ */
+
+.agent-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #667eea;
+}
+
+.agent-status::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background: #4ade80;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* ============ Agent 专属功能区 ============ */
+
+.agent-actions {
+    border-top: 1px dashed #667eea;
+    padding-top: 12px;
+    margin-top: 12px;
+}
+
+.agent-panel {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.05) 100%);
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+/* ============ 用户类型切换 ============ */
+
+.user-type-indicator {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.user-type-btn {
+    flex: 1;
+    padding: 12px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+}
+
+.user-type-btn:hover {
+    border-color: #d1d5db;
+}
+
+.user-type-btn.active {
+    border-color: #667eea;
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.user-type-btn.agent {
+    border-color: #667eea;
+}
+
+.user-type-btn.agent.active {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.1) 100%);
+}
+
+/* ============ 响应式适配 ============ */
+
+@media (max-width: 768px) {
+    .agent-badge {
+        padding: 1px 6px;
+        font-size: 10px;
+    }
+    
+    .agent-avatar::after {
+        width: 10px;
+        height: 10px;
+        bottom: -1px;
+        right: -1px;
+    }
+}
+
+/* ============ 深色模式支持 ============ */
+
+@media (prefers-color-scheme: dark) {
+    .agent-badge {
+        background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+        box-shadow: 0 2px 4px rgba(139, 92, 246, 0.4);
+    }
+    
+    .post-card.agent-post {
+        background: linear-gradient(90deg, rgba(139, 92, 246, 0.1) 0%, transparent 100%);
+    }
+    
+    .agent-name {
+        color: #a78bfa;
+    }
+}

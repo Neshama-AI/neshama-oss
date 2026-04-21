@@ -1,0 +1,122 @@
+name: 周报摘要
+description: 每周一生成工作周报摘要
+version: 1.0.0
+author: Neshama Team
+
+trigger:
+  type: schedule
+  cron: "0 9 * * 1"
+  timezone: Asia/Shanghai
+
+nodes:
+  - id: trigger_check
+    type: trigger
+    name: 定时触发
+
+  - id: get_week_tasks
+    type: action
+    name: 获取本周任务
+    action: get_tasks
+    params:
+      scope: week
+      status: completed
+
+  - id: get_week_meetings
+    type: action
+    name: 获取本周会议
+    action: get_meetings
+    params:
+      scope: week
+
+  - id: get_week_commits
+    type: action
+    name: 获取代码提交
+    action: get_commits
+    params:
+      scope: week
+      repository: ${config.default_repo}
+
+  - id: calculate_stats
+    type: transform
+    name: 统计数据
+    transform: calculate
+    params:
+      operations:
+        - field: tasks
+          stat: count
+          alias: task_count
+        - field: tasks
+          stat: sum
+          field: estimated_hours
+          alias: total_hours
+        - field: meetings
+          stat: count
+          alias: meeting_count
+        - field: commits
+          stat: count
+          alias: commit_count
+
+  - id: format_summary
+    type: transform
+    name: 格式化周报
+    transform: template
+    params:
+      template: |
+        📊 本周工作摘要
+        ─────────────
+        📅 {{date.start}} ~ {{date.end}}
+        
+        📈 工作完成:
+        • 完成任务: {{stats.task_count}} 项
+        • 预计工时: {{stats.total_hours}} 小时
+        
+        📅 会议安排:
+        • 会议数量: {{stats.meeting_count}} 场
+        
+        💻 代码贡献:
+        • 提交次数: {{stats.commit_count}} 次
+        
+        📝 任务详情:
+        {{#each tasks}}
+        ✓ {{title}} ({{completed_at}})
+        {{/each}}
+
+  - id: save_summary
+    type: action
+    name: 保存周报
+    action: save_document
+    params:
+      type: weekly_report
+      content: ${format_summary.output}
+      folder: ${config.report_folder}
+
+  - id: send_notification
+    type: action
+    name: 发送通知
+    action: send_message
+    params:
+      channel: ${config.notify_channel}
+      template: "周报已生成并保存，请查收！"
+
+edges:
+  - from: trigger_check
+    to: get_week_tasks
+    label: 开始
+
+  - from: get_week_tasks
+    to: get_week_meetings
+
+  - from: get_week_meetings
+    to: get_week_commits
+
+  - from: get_week_commits
+    to: calculate_stats
+
+  - from: calculate_stats
+    to: format_summary
+
+  - from: format_summary
+    to: save_summary
+
+  - from: save_summary
+    to: send_notification

@@ -1,0 +1,481 @@
+{% extends "workshop/base.html" %}
+{% load static %}
+
+{% block title %}技能对比{% endblock %}
+
+{% block extra_css %}
+<style>
+    .compare-container {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    
+    .compare-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+    }
+    
+    .skill-column {
+        border-right: 1px solid #eee;
+        padding: 20px;
+        min-width: 280px;
+    }
+    
+    .skill-column:last-child {
+        border-right: none;
+    }
+    
+    .skill-column-header {
+        text-align: center;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #f0f0f0;
+        margin-bottom: 20px;
+    }
+    
+    .skill-icon-large {
+        width: 80px;
+        height: 80px;
+        border-radius: 16px;
+        object-fit: cover;
+        margin-bottom: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .skill-name {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 4px;
+    }
+    
+    .skill-creator {
+        color: #888;
+        font-size: 14px;
+    }
+    
+    .level-badge {
+        display: inline-flex;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    
+    .level-novice { background: #e0e0e0; color: #616161; }
+    .level-skilled { background: #4fc3f7; color: white; }
+    .level-master { background: #ffb74d; color: white; }
+    .level-legend { background: linear-gradient(135deg, #f5af19, #f12711); color: white; }
+    
+    .compare-row {
+        display: flex;
+        border-bottom: 1px solid #f5f5f5;
+    }
+    
+    .compare-label {
+        width: 150px;
+        padding: 16px;
+        background: #fafafa;
+        font-weight: 600;
+        color: #666;
+        display: flex;
+        align-items: center;
+    }
+    
+    .compare-values {
+        flex: 1;
+        display: flex;
+    }
+    
+    .compare-value {
+        flex: 1;
+        padding: 16px;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .best-badge {
+        background: linear-gradient(135deg, #4caf50, #8bc34a);
+        color: white;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 600;
+        margin-left: 8px;
+    }
+    
+    .rating-stars {
+        color: #ffc107;
+    }
+    
+    .price-tag {
+        font-size: 20px;
+        font-weight: 700;
+        color: #4caf50;
+    }
+    
+    .price-tag.paid {
+        color: #f44336;
+    }
+    
+    .recommendation-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 16px;
+        padding: 30px;
+        margin-top: 30px;
+    }
+    
+    .recommendation-item {
+        background: rgba(255,255,255,0.2);
+        border-radius: 10px;
+        padding: 16px;
+        margin-bottom: 12px;
+    }
+    
+    .dimension-chart {
+        height: 8px;
+        background: #e0e0e0;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 8px;
+    }
+    
+    .dimension-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.5s;
+    }
+    
+    .skill-compare-btn {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+        cursor: pointer;
+        transition: transform 0.2s;
+        z-index: 100;
+    }
+    
+    .skill-compare-btn:hover {
+        transform: scale(1.1);
+    }
+    
+    .dimension-matrix {
+        display: grid;
+        gap: 4px;
+    }
+    
+    .dimension-cell {
+        padding: 12px;
+        border-radius: 8px;
+        text-align: center;
+    }
+    
+    .dimension-header {
+        background: #f5f5f5;
+        font-weight: 600;
+        color: #666;
+    }
+    
+    .dimension-best {
+        background: #e8f5e9;
+        color: #4caf50;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- 页面标题 -->
+    <div class="compare-header">
+        <h2 class="mb-2"><i class="fas fa-balance-scale me-2"></i>技能对比</h2>
+        <p class="mb-0 opacity-75">选择多个技能进行横向对比，找到最适合您的选择</p>
+    </div>
+    
+    <!-- 对比工具栏 -->
+    <div class="bg-white rounded-3 p-3 mb-4 d-flex justify-content-between align-items-center">
+        <div>
+            <span class="text-muted">已选择 <strong id="selected-count">{{ skills|length }}</strong> 个技能</span>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary btn-sm" onclick="clearSelection()">
+                <i class="fas fa-times me-1"></i>清除选择
+            </button>
+            <button class="btn btn-primary btn-sm" onclick="shareComparison()">
+                <i class="fas fa-share-alt me-1"></i>分享对比
+            </button>
+        </div>
+    </div>
+    
+    {% if skills %}
+    <!-- 对比表格 -->
+    <div class="compare-container">
+        <div class="compare-row">
+            <div class="compare-label"></div>
+            <div class="compare-values">
+                {% for skill in skills %}
+                <div class="compare-value">
+                    <div>
+                        <img src="{{ skill.icon|default:'https://via.placeholder.com/80' }}" 
+                             alt="{{ skill.name }}" 
+                             class="skill-icon-large mb-2">
+                        <div class="skill-name">{{ skill.name }}</div>
+                        <div class="skill-creator">
+                            {{ skill.creator.user.username }}
+                            <span class="level-badge level-{{ skill.creator.level }}">
+                                {{ skill.creator.get_level_display }}
+                            </span>
+                        </div>
+                        <div class="mt-2">
+                            <a href="{% url 'workshop:skill_detail' skill.slug %}" 
+                               class="btn btn-sm btn-outline-primary">
+                                查看详情
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- 评分对比 -->
+        <div class="compare-row">
+            <div class="compare-label">
+                <i class="fas fa-star me-2 text-warning"></i>用户评分
+            </div>
+            <div class="compare-values">
+                {% for skill in skills %}
+                <div class="compare-value {% if skill.best_rating %}dimension-best{% endif %}">
+                    <div>
+                        <div class="rating-stars mb-1">
+                            {% for i in "12345" %}
+                            <i class="fas fa-star{% if forloop.counter > skill.avg_rating %}-half-alt{% endif %}"></i>
+                            {% endfor %}
+                        </div>
+                        <strong>{{ skill.avg_rating|floatformat:1 }}</strong>
+                        <span class="text-muted small">({{ skill.rating_count }}条)</span>
+                        {% if skill.best_rating %}<span class="best-badge">最高</span>{% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- 安装量对比 -->
+        <div class="compare-row">
+            <div class="compare-label">
+                <i class="fas fa-download me-2 text-primary"></i>安装量
+            </div>
+            <div class="compare-values">
+                {% for skill in skills %}
+                <div class="compare-value {% if skill.best_installs %}dimension-best{% endif %}">
+                    <div>
+                        <strong>{{ skill.install_count }}</strong>
+                        {% if skill.best_installs %}<span class="best-badge">最高</span>{% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- 价格对比 -->
+        <div class="compare-row">
+            <div class="compare-label">
+                <i class="fas fa-tag me-2 text-success"></i>价格
+            </div>
+            <div class="compare-values">
+                {% for skill in skills %}
+                <div class="compare-value">
+                    <div>
+                        {% if skill.is_premium %}
+                        <span class="price-tag paid">¥{{ skill.price }}</span>
+                        {% else %}
+                        <span class="price-tag">免费</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- 版本对比 -->
+        <div class="compare-row">
+            <div class="compare-label">
+                <i class="fas fa-code-branch me-2 text-info"></i>当前版本
+            </div>
+            <div class="compare-values">
+                {% for skill in skills %}
+                <div class="compare-value">
+                    <span class="badge bg-secondary">v{{ skill.version }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- 更新频率对比 -->
+        <div class="compare-row">
+            <div class="compare-label">
+                <i class="fas fa-sync me-2 text-secondary"></i>更新频率
+            </div>
+            <div class="compare-values">
+                {% for skill in skills %}
+                <div class="compare-value">
+                    <div class="dimension-chart" style="width: 120px;">
+                        <div class="dimension-fill {% if skill.best_update %}bg-success{% else %}bg-primary{% endif %}" 
+                             style="width: {{ skill.update_frequency }}0%"></div>
+                    </div>
+                    <small class="text-muted d-block mt-1">
+                        {% if skill.update_frequency >= 8 %}频繁更新
+                        {% elif skill.update_frequency >= 5 %}定期更新
+                        {% else %}偶尔更新{% endif %}
+                    </small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- 文档完整性 -->
+        <div class="compare-row">
+            <div class="compare-label">
+                <i class="fas fa-file-alt me-2 text-warning"></i>文档完整性
+            </div>
+            <div class="compare-values">
+                {% for skill in skills %}
+                <div class="compare-value">
+                    <div class="dimension-chart" style="width: 120px;">
+                        <div class="dimension-fill {% if skill.best_doc %}bg-success{% else %}bg-warning{% endif %}" 
+                             style="width: {{ skill.documentation }}0%"></div>
+                    </div>
+                    <small class="text-muted d-block mt-1">
+                        {{ skill.documentation|default:0 }}/10
+                    </small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- 更新时间 -->
+        <div class="compare-row">
+            <div class="compare-label">
+                <i class="fas fa-clock me-2 text-muted"></i>最后更新
+            </div>
+            <div class="compare-values">
+                {% for skill in skills %}
+                <div class="compare-value">
+                    {{ skill.updated_at|date:"Y-m-d" }}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- 操作按钮 -->
+        <div class="compare-row">
+            <div class="compare-label"></div>
+            <div class="compare-values">
+                {% for skill in skills %}
+                <div class="compare-value">
+                    {% if skill.is_premium %}
+                    <button class="btn btn-danger btn-sm">
+                        <i class="fas fa-shopping-cart me-1"></i>立即购买
+                    </button>
+                    {% else %}
+                    <button class="btn btn-success btn-sm">
+                        <i class="fas fa-download me-1"></i>免费安装
+                    </button>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- 推荐建议 -->
+    {% if recommendations %}
+    <div class="recommendation-card">
+        <h4 class="mb-4"><i class="fas fa-lightbulb me-2"></i>购买建议</h4>
+        {% for rec in recommendations %}
+        <div class="recommendation-item">
+            <i class="fas fa-check-circle me-2"></i>{{ rec }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <!-- 未选择技能 -->
+    <div class="text-center py-5">
+        <i class="fas fa-balance-scale fa-4x text-muted mb-4"></i>
+        <h4 class="text-muted">请选择要对比的技能</h4>
+        <p class="text-muted">在技能列表页面，点击技能卡片上的对比按钮添加到对比栏</p>
+        <a href="{% url 'workshop:skill_list' %}" class="btn btn-primary">
+            <i class="fas fa-th-large me-2"></i>浏览技能市场
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- 悬浮对比按钮 -->
+<button class="skill-compare-btn" data-bs-toggle="tooltip" title="添加对比">
+    <i class="fas fa-plus fa-lg"></i>
+</button>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function clearSelection() {
+    if (confirm('确定要清除所有已选择的技能吗？')) {
+        // 清除本地存储的选择
+        localStorage.removeItem('skill_comparison');
+        location.reload();
+    }
+}
+
+function shareComparison() {
+    const skills = {{ skills_json|safe }};
+    const url = new URL(window.location.href);
+    url.searchParams.set('compare', skills.map(s => s.id).join(','));
+    
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(url.toString());
+        alert('对比链接已复制到剪贴板！');
+    } else {
+        prompt('请复制以下链接分享对比:', url.toString());
+    }
+}
+
+// 添加到对比
+function addToCompare(skillId) {
+    let compare = JSON.parse(localStorage.getItem('skill_comparison') || '[]');
+    if (!compare.includes(skillId) && compare.length < 5) {
+        compare.push(skillId);
+        localStorage.setItem('skill_comparison', JSON.stringify(compare));
+        updateCompareBadge();
+    }
+}
+
+// 更新对比徽章
+function updateCompareBadge() {
+    const compare = JSON.parse(localStorage.getItem('skill_comparison') || '[]');
+    const badge = document.getElementById('selected-count');
+    if (badge) {
+        badge.textContent = compare.length;
+    }
+}
+
+// 页面加载时更新
+document.addEventListener('DOMContentLoaded', updateCompareBadge);
+</script>
+{% endblock %}

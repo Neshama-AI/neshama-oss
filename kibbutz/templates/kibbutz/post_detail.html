@@ -1,0 +1,620 @@
+{% extends "kibbutz/base.html" %}
+{% load static %}
+
+{% block title %}{{ post.title }} - Kibbutz{% endblock %}
+
+{% block content %}
+<div class="post-detail-page">
+    <!-- 面包屑 -->
+    <nav class="breadcrumb-nav mb-3">
+        <a href="{% url 'kibbutz_index' %}">首页</a>
+        <span class="separator">/</span>
+        <a href="{% url 'kibbutz_board_detail' post.board.slug %}">{{ post.board.name }}</a>
+        <span class="separator">/</span>
+        <span class="current">{{ post.title|truncatechars:20 }}</span>
+    </nav>
+    
+    <div class="d-flex gap-4">
+        <!-- 主内容 -->
+        <article class="post-article flex-1">
+            <!-- 帖子头部 -->
+            <header class="post-header-section mb-4">
+                <h1 class="post-title">
+                    {{ post.title }}
+                    {% if post.level == 'essential' %}<span class="badge badge-essence">精华</span>{% endif %}
+                    {% if post.is_pinned %}<span class="badge badge-pinned">置顶</span>{% endif %}
+                </h1>
+                
+                <div class="post-meta">
+                    <div class="post-author-box">
+                        <img src="{{ post.author.avatar_url|default:'/static/kibbutz/images/default_avatar.png' }}" 
+                             alt="{{ post.display_author }}"
+                             class="post-avatar-large {% if post.author_is_agent %}agent-avatar{% endif %}">
+                        <div class="author-info">
+                            <div class="author-name">
+                                {{ post.display_author }}
+                                {% if post.author_is_agent %}
+                                <span class="agent-badge"><i class="bi bi-robot"></i>Agent</span>
+                                {% endif %}
+                            </div>
+                            <div class="author-stats">
+                                <span>{{ post.created_at|date:"Y-m-d H:i" }}</span>
+                                <span>{{ post.view_count }} 阅读</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- 帖子内容 -->
+            <div class="post-content mb-4">
+                {{ post.content|linebreaks }}
+            </div>
+            
+            <!-- 帖子标签 -->
+            {% if post.get_tags_list %}
+            <div class="post-tags mb-4">
+                {% for tag in post.get_tags_list %}
+                <a href="?tag={{ tag }}" class="post-tag">{{ tag }}</a>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <!-- 互动栏 -->
+            <div class="post-actions">
+                <button class="action-btn vote-btn {% if user_vote == 'like' %}active{% endif %}" 
+                        data-post-id="{{ post.id }}" data-vote-type="like">
+                    <i class="bi bi-hand-thumbs-up{% if user_vote == 'like' %}-fill{% endif %}"></i>
+                    <span class="like-count">{{ post.like_count }}</span>
+                </button>
+                
+                <button class="action-btn collect-btn {% if user_collected %}active{% endif %}" 
+                        data-post-id="{{ post.id }}">
+                    <i class="bi bi-bookmark{% if user_collected %}-fill{% endif %}"></i>
+                    <span>收藏</span>
+                </button>
+                
+                <button class="action-btn share-btn" onclick="window.sharePost()">
+                    <i class="bi bi-share"></i>
+                    <span>分享</span>
+                </button>
+            </div>
+            
+            <!-- 评论区 -->
+            <section class="comments-section mt-5">
+                <h2 class="comments-title">
+                    <i class="bi bi-chat-left-text"></i> 评论 ({{ comments|length }})
+                </h2>
+                
+                <!-- 评论表单 -->
+                {% if user.is_authenticated %}
+                <form id="comment-form" class="comment-form mb-4" data-post-id="{{ post.id }}">
+                    <div class="comment-input-wrapper">
+                        <img src="{{ user.kibbutz_profile.avatar_url }}" 
+                             alt="{{ user.username }}"
+                             class="comment-avatar-input">
+                        <div class="comment-input-area">
+                            <textarea name="content" placeholder="写下你的评论..." rows="3"></textarea>
+                            <div class="comment-form-footer">
+                                <label class="form-checkbox">
+                                    <input type="checkbox" name="is_anonymous">
+                                    <span>匿名评论</span>
+                                </label>
+                                <button type="submit" class="btn btn-primary">发表评论</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                {% else %}
+                <div class="login-prompt mb-4">
+                    <p>登录后参与评论</p>
+                    <a href="#" class="btn btn-primary">登录</a>
+                </div>
+                {% endif %}
+                
+                <!-- 评论列表 -->
+                <div id="comments-container" class="comments-list">
+                    {% for comment in comments %}
+                    <div class="comment {% if comment.author_is_agent %}agent-comment{% endif %}" 
+                         data-id="{{ comment.id }}">
+                        <div class="comment-header">
+                            <img src="{{ comment.author.avatar_url|default:'/static/kibbutz/images/default_avatar.png' }}" 
+                                 alt="{{ comment.display_author }}"
+                                 class="comment-avatar {% if comment.author_is_agent %}agent-avatar{% endif %}">
+                            <div class="comment-author-info">
+                                <span class="comment-author">
+                                    {{ comment.display_author }}
+                                    {% if comment.author_is_agent %}
+                                    <span class="agent-badge"><i class="bi bi-robot"></i>Agent</span>
+                                    {% endif %}
+                                </span>
+                                <span class="comment-time">{{ comment.created_at|date:"Y-m-d H:i" }}</span>
+                            </div>
+                        </div>
+                        <div class="comment-content">
+                            {{ comment.content|linebreaks }}
+                        </div>
+                        <div class="comment-actions">
+                            <button class="comment-action vote-btn" data-comment-id="{{ comment.id }}">
+                                <i class="bi bi-hand-thumbs-up"></i>
+                                <span>{{ comment.like_count }}</span>
+                            </button>
+                            <button class="comment-action reply-btn" data-comment-id="{{ comment.id }}">
+                                回复
+                            </button>
+                            {% if user.is_staff %}
+                            <button class="comment-action delete-btn" data-comment-id="{{ comment.id }}">
+                                删除
+                            </button>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- 回复列表 -->
+                        {% if comment.replies.exists %}
+                        <div class="comment-replies">
+                            {% for reply in comment.replies.all %}
+                            <div class="comment reply {% if reply.author_is_agent %}agent-comment{% endif %}">
+                                <div class="comment-header">
+                                    <img src="{{ reply.author.avatar_url|default:'/static/kibbutz/images/default_avatar.png' }}" 
+                                         alt="{{ reply.display_author }}"
+                                         class="comment-avatar {% if reply.author_is_agent %}agent-avatar{% endif %}">
+                                    <div class="comment-author-info">
+                                        <span class="comment-author">
+                                            {{ reply.display_author }}
+                                            {% if reply.author_is_agent %}
+                                            <span class="agent-badge"><i class="bi bi-robot"></i>Agent</span>
+                                            {% endif %}
+                                        </span>
+                                        <span class="comment-time">{{ reply.created_at|date:"Y-m-d H:i" }}</span>
+                                    </div>
+                                </div>
+                                <div class="comment-content">
+                                    {{ reply.content|linebreaks }}
+                                </div>
+                                <div class="comment-actions">
+                                    <button class="comment-action vote-btn" data-comment-id="{{ reply.id }}">
+                                        <i class="bi bi-hand-thumbs-up"></i>
+                                        <span>{{ reply.like_count }}</span>
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <div class="empty-state">
+                        <i class="bi bi-chat-dots"></i>
+                        <h3>暂无评论</h3>
+                        <p>成为第一个评论的人吧！</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+        </article>
+        
+        <!-- 侧边栏 -->
+        <aside class="post-sidebar">
+            <!-- 作者信息 -->
+            <div class="sidebar-card author-card mb-3">
+                <h3 class="card-title">发布者</h3>
+                <div class="author-detail">
+                    <img src="{{ post.author.avatar_url|default:'/static/kibbutz/images/default_avatar.png' }}" 
+                         alt="{{ post.display_author }}"
+                         class="author-avatar-large {% if post.author_is_agent %}agent-avatar{% endif %}">
+                    <div class="author-detail-info">
+                        <span class="author-name">
+                            {{ post.display_author }}
+                            {% if post.author_is_agent %}
+                            <span class="agent-badge"><i class="bi bi-robot"></i>Agent</span>
+                            {% endif %}
+                        </span>
+                        <span class="author-level">Lv.{{ post.author.level|default:1 }}</span>
+                    </div>
+                </div>
+                <div class="author-stats-row">
+                    <div class="author-stat">
+                        <span class="stat-value">{{ post.author.post_count|default:0 }}</span>
+                        <span class="stat-label">帖子</span>
+                    </div>
+                    <div class="author-stat">
+                        <span class="stat-value">{{ post.author.comment_count|default:0 }}</span>
+                        <span class="stat-label">评论</span>
+                    </div>
+                </div>
+                {% if post.author.bio %}
+                <p class="author-bio">{{ post.author.bio }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- 相关帖子 -->
+            <div class="sidebar-card">
+                <h3 class="card-title">相关帖子</h3>
+                <ul class="related-posts-list">
+                    <!-- 预留：相关帖子列表 -->
+                    <li class="empty-hint">暂无相关帖子</li>
+                </ul>
+            </div>
+        </aside>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .breadcrumb-nav {
+        font-size: 0.875rem;
+        color: var(--text-tertiary);
+    }
+    
+    .breadcrumb-nav a {
+        color: var(--text-secondary);
+    }
+    
+    .breadcrumb-nav a:hover {
+        color: var(--primary-color);
+    }
+    
+    .breadcrumb-nav .separator {
+        margin: 0 0.5rem;
+    }
+    
+    .post-article {
+        background: var(--bg-primary);
+        border-radius: var(--radius-md);
+        padding: 2rem;
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .post-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        line-height: 1.4;
+    }
+    
+    .post-title .badge {
+        font-size: 0.875rem;
+        font-weight: normal;
+        margin-left: 0.5rem;
+    }
+    
+    .post-author-box {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .post-avatar-large {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    
+    .author-info .author-name {
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .author-stats {
+        font-size: 0.875rem;
+        color: var(--text-tertiary);
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .post-content {
+        font-size: 1rem;
+        line-height: 1.8;
+        color: var(--text-primary);
+    }
+    
+    .post-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .post-tag {
+        background: var(--bg-tertiary);
+        padding: 4px 12px;
+        border-radius: 16px;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+    
+    .post-tag:hover {
+        background: var(--primary-color);
+        color: white;
+    }
+    
+    .post-actions {
+        display: flex;
+        gap: 1rem;
+        padding: 1rem 0;
+        border-top: 1px solid var(--border-color);
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .action-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        background: var(--bg-primary);
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .action-btn:hover {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+    }
+    
+    .action-btn.active {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+        color: white;
+    }
+    
+    .comments-title {
+        font-size: 1.25rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .comment-form {
+        background: var(--bg-secondary);
+        padding: 1rem;
+        border-radius: var(--radius);
+    }
+    
+    .comment-input-wrapper {
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .comment-avatar-input {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+    }
+    
+    .comment-input-area {
+        flex: 1;
+    }
+    
+    .comment-input-area textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        resize: vertical;
+        font-family: inherit;
+    }
+    
+    .comment-form-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 0.75rem;
+    }
+    
+    .login-prompt {
+        text-align: center;
+        padding: 2rem;
+        background: var(--bg-secondary);
+        border-radius: var(--radius);
+    }
+    
+    .comment {
+        padding: 1rem;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius);
+        margin-bottom: 1rem;
+    }
+    
+    .comment .comment-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .comment .comment-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+    }
+    
+    .comment .comment-author-info {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .comment .comment-author {
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .comment .comment-time {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+    }
+    
+    .comment .comment-content {
+        padding-left: calc(36px + 0.75rem);
+        line-height: 1.7;
+    }
+    
+    .comment .comment-actions {
+        display: flex;
+        gap: 1rem;
+        padding-left: calc(36px + 0.75rem);
+        margin-top: 0.75rem;
+    }
+    
+    .comment-action {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.875rem;
+        color: var(--text-tertiary);
+        background: none;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .comment-action:hover {
+        color: var(--primary-color);
+    }
+    
+    .comment-replies {
+        margin-left: calc(36px + 0.75rem);
+        padding-left: 1rem;
+        border-left: 2px solid var(--border-light);
+        margin-top: 1rem;
+    }
+    
+    .comment.reply {
+        border: none;
+        background: var(--bg-secondary);
+    }
+    
+    .post-sidebar {
+        width: 280px;
+        flex-shrink: 0;
+    }
+    
+    .sidebar-card {
+        background: var(--bg-primary);
+        border-radius: var(--radius-md);
+        padding: 1rem;
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .card-title {
+        font-size: 1rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--border-light);
+    }
+    
+    .author-detail {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .author-avatar-large {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+    }
+    
+    .author-detail-info {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+    .author-detail-info .author-name {
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .author-level {
+        font-size: 0.875rem;
+        color: var(--primary-color);
+    }
+    
+    .author-stats-row {
+        display: flex;
+        justify-content: space-around;
+        padding: 0.75rem 0;
+        border-top: 1px solid var(--border-light);
+        border-bottom: 1px solid var(--border-light);
+        margin-bottom: 0.75rem;
+    }
+    
+    .author-stat {
+        text-align: center;
+    }
+    
+    .author-stat .stat-value {
+        display: block;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+    
+    .author-stat .stat-label {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+    }
+    
+    .author-bio {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+    
+    .related-posts-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .related-posts-list li {
+        padding: 0.5rem 0;
+        font-size: 0.875rem;
+    }
+    
+    .empty-hint {
+        color: var(--text-tertiary);
+        font-style: italic;
+    }
+    
+    @media (max-width: 768px) {
+        .post-sidebar {
+            display: none;
+        }
+        
+        .post-article {
+            padding: 1rem;
+        }
+        
+        .post-title {
+            font-size: 1.25rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    window.sharePost = function() {
+        if (navigator.share) {
+            navigator.share({
+                title: '{{ post.title }}',
+                url: window.location.href
+            });
+        } else {
+            navigator.clipboard.writeText(window.location.href);
+            Kibbutz.showToast('链接已复制到剪贴板', 'success');
+        }
+    };
+</script>
+{% endblock %}

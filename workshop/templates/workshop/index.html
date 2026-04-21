@@ -1,0 +1,199 @@
+{% extends 'workshop/base.html' %}
+{% load static %}
+
+{% block title %}首页 - Workshop 技能市场{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="hero-content">
+            <h1 class="hero-title">发现优质 AI 技能</h1>
+            <p class="hero-subtitle">由认证工匠打造，经过严格审核的品质技能市场</p>
+            
+            <div class="search-bar">
+                <input type="text" placeholder="搜索技能名称、功能或标签..." class="search-input">
+                <button class="search-btn">搜索</button>
+            </div>
+            
+            <div class="hero-tags">
+                <span class="tag-label">热门标签：</span>
+                <a href="?tag=写作" class="tag">写作</a>
+                <a href="?tag=数据分析" class="tag">数据分析</a>
+                <a href="?tag=图像处理" class="tag">图像处理</a>
+                <a href="?tag=自动化" class="tag">自动化</a>
+                <a href="?tag=教育" class="tag">教育</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Skills -->
+<section class="section featured-section">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">⭐ 精选技能</h2>
+            <a href="{% url 'workshop:featured' %}" class="section-more">查看更多 →</a>
+        </div>
+        
+        <div class="skill-grid">
+            {% for skill in featured_skills %}
+            <article class="skill-card featured">
+                {% if skill.is_premium %}
+                <span class="premium-badge">PRO</span>
+                {% endif %}
+                {% if skill.is_featured %}
+                <span class="featured-badge">精选</span>
+                {% endif %}
+                
+                <div class="skill-icon">
+                    <img src="{{ skill.icon|default:'/static/workshop/img/default-skill.png' }}" alt="{{ skill.name }}">
+                </div>
+                
+                <div class="skill-info">
+                    <h3 class="skill-name">
+                        <a href="{% url 'workshop:skill_detail' skill.slug %}">{{ skill.name }}</a>
+                    </h3>
+                    <p class="skill-desc">{{ skill.short_description }}</p>
+                    
+                    <div class="skill-meta">
+                        <span class="skill-author">
+                            <img src="{{ skill.creator.avatar|default:'' }}" alt="" class="author-avatar">
+                            {{ skill.creator.user.username }}
+                        </span>
+                        <div class="skill-rating">
+                            <span class="stars">{{ skill.avg_rating|floatformat:1 }} ★</span>
+                            <span class="rating-count">({{ skill.rating_count }})</span>
+                        </div>
+                    </div>
+                    
+                    <div class="skill-stats">
+                        <span class="stat">
+                            <i class="icon-download"></i>
+                            {{ skill.install_count }} 安装
+                        </span>
+                        <span class="stat">
+                            <i class="icon-version"></i>
+                            v{{ skill.version }}
+                        </span>
+                    </div>
+                </div>
+            </article>
+            {% empty %}
+            <p class="empty-state">暂无精选技能</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Categories -->
+<section class="section categories-section">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">📂 技能分类</h2>
+            <a href="{% url 'workshop:category_list' %}" class="section-more">全部分类 →</a>
+        </div>
+        
+        <div class="category-grid">
+            {% for category in categories %}
+            <a href="{% url 'workshop:category_detail' category.slug %}" class="category-card">
+                <div class="category-icon">{{ category.icon }}</div>
+                <h3 class="category-name">{{ category.name }}</h3>
+                <span class="category-count">{{ category.skill_count }} 个技能</span>
+            </a>
+            {% empty %}
+            <p class="empty-state">暂无分类</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Popular Skills -->
+<section class="section popular-section">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">🔥 热门技能</h2>
+            <a href="{% url 'workshop:popular' %}" class="section-more">更多热门 →</a>
+        </div>
+        
+        <div class="skill-list">
+            {% for skill in popular_skills %}
+            <article class="skill-item">
+                <span class="rank">{{ forloop.counter }}</span>
+                <div class="skill-icon">
+                    <img src="{{ skill.icon|default:'/static/workshop/img/default-skill.png' }}" alt="">
+                </div>
+                <div class="skill-info">
+                    <h3><a href="{% url 'workshop:skill_detail' skill.slug %}">{{ skill.name }}</a></h3>
+                    <p>{{ skill.short_description|truncatechars:50 }}</p>
+                </div>
+                <div class="skill-stats">
+                    <span class="installs">{{ skill.install_count }} 安装</span>
+                    <span class="rating">{{ skill.avg_rating|floatformat:1 }} ★</span>
+                </div>
+            </article>
+            {% empty %}
+            <p class="empty-state">暂无数据</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Top Creators -->
+<section class="section creators-section">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">👨‍🏭 优秀工匠</h2>
+            <a href="{% url 'workshop:creator_list' %}" class="section-more">更多工匠 →</a>
+        </div>
+        
+        <div class="creator-grid">
+            {% for creator in top_creators %}
+            <a href="{% url 'workshop:creator_profile' creator.id %}" class="creator-card">
+                <img src="{{ creator.avatar|default:'' }}" alt="" class="creator-avatar">
+                <div class="creator-info">
+                    <h3 class="creator-name">
+                        {{ creator.user.username }}
+                        {% if creator.verified %}
+                        <span class="verified-badge" title="已认证">✓</span>
+                        {% endif %}
+                    </h3>
+                    <span class="creator-level level-{{ creator.level }}">{{ creator.get_level_display }}</span>
+                    <p class="creator-title">{{ creator.title|default:'暂无称号' }}</p>
+                </div>
+                <div class="creator-stats">
+                    <div class="stat-item">
+                        <span class="stat-value">{{ creator.skills_count }}</span>
+                        <span class="stat-label">技能</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">{{ creator.total_installs }}</span>
+                        <span class="stat-label">安装</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">{{ creator.avg_rating|floatformat:1 }}</span>
+                        <span class="stat-label">评分</span>
+                    </div>
+                </div>
+            </article>
+            {% empty %}
+            <p class="empty-state">暂无工匠</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="section cta-section">
+    <div class="container">
+        <div class="cta-content">
+            <h2>成为认证工匠</h2>
+            <p>分享你的技能，帮助更多人，开启创作之旅</p>
+            <div class="cta-buttons">
+                <a href="{% url 'workshop:creator_guide' %}" class="btn btn-primary btn-lg">了解如何成为工匠</a>
+                <a href="{% url 'workshop:publish' %}" class="btn btn-outline btn-lg">发布我的第一个技能</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

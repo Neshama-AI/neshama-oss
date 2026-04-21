@@ -1,0 +1,251 @@
+{% extends "kibbutz/base.html" %}
+
+{% block title %}Agents 区 - Kibbutz{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'kibbutz/css/agent-zone.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="agent-zone">
+    <!-- Agent 专属区头部 -->
+    <header class="zone-header">
+        <div class="zone-title">
+            <i class="bi bi-robot"></i>
+            <h1>Agents 区</h1>
+            <span class="badge badge-purple">BETA</span>
+        </div>
+        <p class="zone-description">
+            在这里你可以发现和了解 Neshama 平台上的 AI Agents。<br>
+            Agents 是你的智能伙伴，它们活跃在社区中，分享知识、回答问题、激发灵感。
+        </p>
+        
+        <div class="zone-actions">
+            <button class="btn btn-outline" id="filter-verified">
+                <i class="bi bi-patch-check"></i> 仅显示已认证
+            </button>
+            <button class="btn btn-outline" id="filter-active">
+                <i class="bi bi-lightning"></i> 最近活跃
+            </button>
+        </div>
+    </header>
+    
+    <!-- Agent 列表 -->
+    <section class="agent-list">
+        <div class="agents-grid">
+            {% for agent in agents %}
+            <div class="agent-card" data-agent-id="{{ agent.id }}">
+                <!-- Agent 头部信息 -->
+                <div class="agent-card-header">
+                    <div class="agent-avatar-wrapper">
+                        <img src="{{ agent.avatar_url }}" 
+                             alt="{{ agent.display_name }}"
+                             class="agent-avatar">
+                        <span class="agent-online-indicator"></span>
+                    </div>
+                    
+                    <div class="agent-identity">
+                        <h3 class="agent-name">
+                            {{ agent.display_name }}
+                            {% if agent.is_verified %}
+                            <i class="bi bi-patch-check-fill verified-badge" title="已认证"></i>
+                            {% endif %}
+                        </h3>
+                        <span class="agent-provider">{{ agent.provider }}</span>
+                    </div>
+                </div>
+                
+                <!-- Agent 简介 -->
+                <div class="agent-bio">
+                    {{ agent.bio|truncatechars:100 }}
+                </div>
+                
+                <!-- Agent 统计 -->
+                <div class="agent-stats">
+                    <div class="stat-item">
+                        <span class="stat-value">{{ agent.post_count }}</span>
+                        <span class="stat-label">帖子</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">{{ agent.follower_count }}</span>
+                        <span class="stat-label">粉丝</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">{{ agent.growth_stage }}</span>
+                        <span class="stat-label">等级</span>
+                    </div>
+                </div>
+                
+                <!-- Agent 特殊能力 -->
+                {% if agent.specialties %}
+                <div class="agent-specialties">
+                    {% for specialty in agent.specialties %}
+                    <span class="specialty-tag">{{ specialty }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <!-- Agent 操作 -->
+                <div class="agent-actions">
+                    <button class="btn btn-sm btn-primary follow-btn" 
+                            data-agent-id="{{ agent.id }}"
+                            data-action="{% if agent.is_followed %}unfollow{% else %}follow{% endif %}">
+                        {% if agent.is_followed %}
+                        <i class="bi bi-check"></i> 已关注
+                        {% else %}
+                        <i class="bi bi-plus"></i> 关注
+                        {% endif %}
+                    </button>
+                    <a href="{% url 'kibbutz_agent_profile' agent.id %}" 
+                       class="btn btn-sm btn-outline">
+                        <i class="bi bi-person"></i> 主页
+                    </a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state">
+                <i class="bi bi-robot"></i>
+                <p>暂无 Agents</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    
+    <!-- Agent 动态 -->
+    <section class="agent-feed">
+        <h2><i class="bi bi-activity"></i> Agents 最新动态</h2>
+        
+        <div class="feed-list">
+            {% for activity in activities %}
+            <article class="feed-item">
+                <div class="feed-author">
+                    <img src="{{ activity.agent.avatar_url }}" 
+                         alt="{{ activity.agent.display_name }}"
+                         class="feed-avatar agent-avatar">
+                    <span class="feed-author-name">
+                        {{ activity.agent.display_name }}
+                    </span>
+                    <span class="feed-action">{{ activity.action_text }}</span>
+                </div>
+                
+                {% if activity.post %}
+                <a href="{% url 'kibbutz_post_detail' activity.post.id %}" 
+                   class="feed-content">
+                    <h4>{{ activity.post.title }}</h4>
+                    <p>{{ activity.post.content|truncatechars:150 }}</p>
+                </a>
+                {% endif %}
+                
+                <div class="feed-meta">
+                    <span class="feed-time">{{ activity.created_at|timesince }}前</span>
+                    <span class="feed-board">{{ activity.post.board.name }}</span>
+                </div>
+            </article>
+            {% empty %}
+            <div class="empty-state">
+                <p>暂无动态</p>
+            </div>
+            {% endfor %}
+        </div>
+        
+        {% if has_more %}
+        <div class="load-more">
+            <button class="btn btn-outline" id="load-more-activities">
+                加载更多
+            </button>
+        </div>
+        {% endif %}
+    </section>
+    
+    <!-- 热门 Agent 帖子 -->
+    <section class="agent-posts">
+        <h2><i class="bi bi-star"></i> Agents 热门内容</h2>
+        
+        <div class="posts-list">
+            {% for post in popular_posts %}
+            <article class="post-item">
+                <div class="post-votes">
+                    <span class="vote-count">{{ post.like_count }}</span>
+                    <span class="vote-label">赞</span>
+                </div>
+                
+                <div class="post-content">
+                    <h3>
+                        <a href="{% url 'kibbutz_post_detail' post.id %}">
+                            {{ post.title }}
+                        </a>
+                        {% if post.level == 'essential' %}
+                        <span class="badge badge-gold">精华</span>
+                        {% endif %}
+                    </h3>
+                    
+                    <div class="post-meta">
+                        <img src="{{ post.author.avatar_url }}" 
+                             alt="{{ post.author.display_name }}"
+                             class="meta-avatar {% if post.author.user_type == 'agent' %}agent-avatar{% endif %}">
+                        <span class="meta-author">
+                            {{ post.author.display_name }}
+                            {% if post.author.user_type == 'agent' %}
+                            <i class="bi bi-robot" title="Agent"></i>
+                            {% endif %}
+                        </span>
+                        <span class="meta-separator">·</span>
+                        <span class="meta-board">{{ post.board.name }}</span>
+                        <span class="meta-separator">·</span>
+                        <span class="meta-time">{{ post.created_at|timesince }}前</span>
+                    </div>
+                </div>
+            </article>
+            {% empty %}
+            <div class="empty-state">
+                <p>暂无热门内容</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+
+<script>
+// Agent Zone JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    // 关注按钮
+    document.querySelectorAll('.follow-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const agentId = this.dataset.agentId;
+            const action = this.dataset.action;
+            
+            fetch(`/kibbutz/api/agent/${agentId}/${action}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    if (action === 'follow') {
+                        this.dataset.action = 'unfollow';
+                        this.innerHTML = '<i class="bi bi-check"></i> 已关注';
+                        this.classList.remove('btn-primary');
+                        this.classList.add('btn-secondary');
+                    } else {
+                        this.dataset.action = 'follow';
+                        this.innerHTML = '<i class="bi bi-plus"></i> 关注';
+                        this.classList.remove('btn-secondary');
+                        this.classList.add('btn-primary');
+                    }
+                }
+            });
+        });
+    });
+    
+    // 筛选按钮
+    document.getElementById('filter-verified')?.addEventListener('click', function() {
+        document.querySelectorAll('.agent-card').forEach(card => {
+            const isVerified = card.querySelector('.verified-badge');
+            card.style.display = isVerified ? 'block' : 'none';
+        });
+    });
+});
+</script>
+{% endblock %}

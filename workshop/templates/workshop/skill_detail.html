@@ -1,0 +1,365 @@
+{% extends 'workshop/base.html' %}
+{% load static %}
+
+{% block title %}{{ skill.name }} - Workshop{% endblock %}
+
+{% block content %}
+<div class="skill-detail-page">
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb">
+        <div class="container">
+            <a href="{% url 'workshop:index' %}">首页</a>
+            <span class="separator">/</span>
+            <a href="{% url 'workshop:category_detail' skill.category.slug %}">{{ skill.category.name }}</a>
+            <span class="separator">/</span>
+            <span class="current">{{ skill.name }}</span>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="skill-detail-layout">
+            <!-- Left Column: Main Info -->
+            <main class="skill-main">
+                <!-- Header -->
+                <header class="skill-header">
+                    <div class="skill-icon-lg">
+                        <img src="{{ skill.icon|default:'/static/workshop/img/default-skill.png' }}" alt="{{ skill.name }}">
+                        {% if skill.is_premium %}
+                        <span class="premium-badge">PRO</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="skill-header-info">
+                        <h1 class="skill-title">{{ skill.name }}</h1>
+                        <p class="skill-subtitle">{{ skill.short_description }}</p>
+                        
+                        <div class="skill-tags">
+                            {% for tag in skill.tags %}
+                            <a href="?tag={{ tag }}" class="tag">{{ tag }}</a>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="skill-meta">
+                            <span class="meta-item">
+                                <span class="label">分类：</span>
+                                <a href="{% url 'workshop:category_detail' skill.category.slug %}">{{ skill.category.name }}</a>
+                            </span>
+                            <span class="meta-item">
+                                <span class="label">版本：</span>
+                                v{{ skill.version }}
+                            </span>
+                            <span class="meta-item">
+                                <span class="label">更新：</span>
+                                {{ skill.updated_at|date:"Y-m-d" }}
+                            </span>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Preview Images -->
+                {% if skill.preview_images %}
+                <section class="skill-previews">
+                    <div class="preview-carousel">
+                        {% for img in skill.preview_images %}
+                        <div class="preview-item">
+                            <img src="{{ img }}" alt="预览图 {{ forloop.counter }}">
+                        </div>
+                        {% endfor %}
+                    </div>
+                </section>
+                {% endif %}
+
+                <!-- Description -->
+                <section class="skill-description">
+                    <h2>技能介绍</h2>
+                    <div class="description-content">
+                        {{ skill.full_description|linebreaks }}
+                    </div>
+                </section>
+
+                <!-- Version History -->
+                <section class="skill-versions">
+                    <h2>版本历史</h2>
+                    <div class="version-list">
+                        {% for version in skill.versions.all %}
+                        <div class="version-item">
+                            <div class="version-header">
+                                <span class="version-number">v{{ version.version }}</span>
+                                <span class="version-date">{{ version.created_at|date:"Y-m-d" }}</span>
+                                {% if version.is_stable %}
+                                <span class="version-stable">稳定版</span>
+                                {% endif %}
+                            </div>
+                            <div class="version-changelog">
+                                {{ version.changelog|linebreaks }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <!-- Reviews -->
+                <section class="skill-reviews">
+                    <h2>用户评价 ({{ skill.rating_count }})</h2>
+                    
+                    <div class="review-summary">
+                        <div class="overall-rating">
+                            <span class="rating-number">{{ skill.avg_rating|floatformat:1 }}</span>
+                            <div class="rating-stars">
+                                {% for i in "12345" %}
+                                <span class="star {% if forloop.counter <= skill.avg_rating|floatformat:"0" %}filled{% endif %}">★</span>
+                                {% endfor %}
+                            </div>
+                            <span class="rating-count">{{ skill.rating_count }} 条评价</span>
+                        </div>
+                        
+                        {% if user.is_authenticated %}
+                        <button class="btn btn-primary" id="write-review-btn">写评价</button>
+                        {% else %}
+                        <a href="{% url 'account_login' %}" class="btn btn-outline">登录后写评价</a>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="review-list">
+                        {% for review in recent_reviews %}
+                        <div class="review-item">
+                            <div class="review-header">
+                                <img src="{{ review.user.craftsman_profile.avatar|default:'' }}" alt="" class="reviewer-avatar">
+                                <div class="reviewer-info">
+                                    <span class="reviewer-name">
+                                        {{ review.user.username }}
+                                        {% if review.is_verified %}
+                                        <span class="verified-tag">已安装</span>
+                                        {% endif %}
+                                    </span>
+                                    <div class="review-stars">
+                                        {% for i in "12345" %}
+                                        <span class="star {% if forloop.counter <= review.rating %}filled{% endif %}">★</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <span class="review-date">{{ review.created_at|date:"Y-m-d" }}</span>
+                            </div>
+                            <div class="review-content">
+                                {{ review.comment|default:"该用户未留下文字评价" }}
+                            </div>
+                            <div class="review-actions">
+                                <button class="helpful-btn" data-review-id="{{ review.id }}">
+                                    👍 有帮助 ({{ review.helpful_count }})
+                                </button>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="empty-state">暂无评价，成为第一个评价的用户吧！</p>
+                        {% endfor %}
+                    </div>
+                </section>
+            </main>
+
+            <!-- Right Column: Sidebar -->
+            <aside class="skill-sidebar">
+                <!-- Action Card -->
+                <div class="action-card">
+                    {% if skill.is_premium %}
+                    <div class="price-display">
+                        <span class="price-symbol">¥</span>
+                        <span class="price-value">{{ skill.price }}</span>
+                    </div>
+                    {% else %}
+                    <div class="price-display free">
+                        <span class="price-value">免费</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if is_installed %}
+                    <button class="btn btn-block btn-installed" disabled>已安装 v{{ installed_version }}</button>
+                    <button class="btn btn-block btn-outline" id="uninstall-btn">卸载</button>
+                    {% else %}
+                    <button class="btn btn-block btn-primary btn-lg" id="install-btn" data-skill-slug="{{ skill.slug }}">
+                        {{ skill.is_premium|yesno:"立即购买,立即安装" }}
+                    </button>
+                    {% endif %}
+                    
+                    <div class="install-stats">
+                        <div class="stat">
+                            <span class="stat-value">{{ skill.install_count }}</span>
+                            <span class="stat-label">安装</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-value">{{ skill.avg_rating|floatformat:1 }}</span>
+                            <span class="stat-label">评分</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-value">{{ skill.rating_count }}</span>
+                            <span class="stat-label">评价</span>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-block btn-outline btn-sm" id="favorite-btn">
+                        {% if is_favorited %}取消收藏{% else %}收藏{% endif %}
+                    </button>
+                </div>
+
+                <!-- Creator Info -->
+                <div class="creator-card">
+                    <h3>关于创作者</h3>
+                    <a href="{% url 'workshop:creator_profile' skill.creator.id %}" class="creator-link">
+                        <img src="{{ skill.creator.avatar|default:'' }}" alt="" class="creator-avatar-lg">
+                        <div class="creator-info">
+                            <span class="creator-name">
+                                {{ skill.creator.user.username }}
+                                {% if skill.creator.verified %}
+                                <span class="verified-badge">✓</span>
+                                {% endif %}
+                            </span>
+                            <span class="creator-level level-{{ skill.creator.level }}">
+                                {{ skill.creator.get_level_display }}
+                            </span>
+                        </div>
+                    </a>
+                    <p class="creator-bio">{{ skill.creator.bio|truncatechars:100|default:"暂无简介" }}</p>
+                    <a href="{% url 'workshop:creator_profile' skill.creator.id %}" class="btn btn-outline btn-block">
+                        查看主页
+                    </a>
+                </div>
+
+                <!-- Quality Score -->
+                {% if quality_info %}
+                <div class="quality-card">
+                    <h3>质量评分</h3>
+                    <div class="quality-score">
+                        <span class="score-number">{{ quality_info.total_score }}</span>
+                        <span class="score-grade grade-{{ quality_info.grade }}">{{ quality_info.grade }}</span>
+                    </div>
+                    <div class="quality-breakdown">
+                        {% for key, value in quality_info.breakdown.items %}
+                        <div class="breakdown-item">
+                            <span class="item-label">{{ key }}</span>
+                            <div class="item-bar">
+                                <div class="item-fill" style="width: {{ value|multiply:10 }}%"></div>
+                            </div>
+                            <span class="item-value">{{ value|floatformat:1 }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Report -->
+                <div class="report-card">
+                    <button class="report-btn" id="report-btn">举报 / 反馈</button>
+                </div>
+            </aside>
+        </div>
+    </div>
+</div>
+
+<!-- Review Modal -->
+{% if user.is_authenticated %}
+<div class="modal" id="review-modal">
+    <div class="modal-content">
+        <span class="modal-close">&times;</span>
+        <h2>评价 {{ skill.name }}</h2>
+        <form id="review-form" method="POST" action="{% url 'workshop:skill_rate' skill.slug %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>评分</label>
+                <div class="rating-input">
+                    {% for i in "12345" %}
+                    <button type="button" class="star-btn" data-rating="{{ forloop.counter }}">★</button>
+                    {% endfor %}
+                    <input type="hidden" name="rating" id="rating-value" value="5">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="comment">评价内容（可选）</label>
+                <textarea name="comment" id="comment" rows="4" placeholder="分享你的使用体验..."></textarea>
+            </div>
+            <div class="form-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" name="is_anonymous" id="is_anonymous">
+                    匿名评价
+                </label>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">提交评价</button>
+        </form>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Install button
+    const installBtn = document.getElementById('install-btn');
+    if (installBtn) {
+        installBtn.addEventListener('click', async function() {
+            const slug = this.dataset.skillSlug;
+            try {
+                const response = await fetch(`/workshop/api/skills/${slug}/install/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+                const data = await response.json();
+                if (data.status === 'installed' || data.status === 'updated') {
+                    showToast('安装成功');
+                    location.reload();
+                }
+            } catch (error) {
+                showToast('安装失败，请重试', 'error');
+            }
+        });
+    }
+    
+    // Favorite button
+    const favoriteBtn = document.getElementById('favorite-btn');
+    if (favoriteBtn) {
+        favoriteBtn.addEventListener('click', async function() {
+            const slug = '{{ skill.slug }}';
+            try {
+                const response = await fetch(`/workshop/api/skills/${slug}/favorite/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+                const data = await response.json();
+                this.textContent = data.status === 'favorited' ? '取消收藏' : '收藏';
+                showToast(data.message);
+            } catch (error) {
+                showToast('操作失败', 'error');
+            }
+        });
+    }
+    
+    // Review modal
+    const reviewBtn = document.getElementById('write-review-btn');
+    const reviewModal = document.getElementById('review-modal');
+    if (reviewBtn && reviewModal) {
+        reviewBtn.addEventListener('click', function() {
+            reviewModal.classList.add('active');
+        });
+        
+        reviewModal.querySelector('.modal-close').addEventListener('click', function() {
+            reviewModal.classList.remove('active');
+        });
+    }
+    
+    // Rating input
+    const starBtns = document.querySelectorAll('.star-btn');
+    starBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const rating = this.dataset.rating;
+            document.getElementById('rating-value').value = rating;
+            starBtns.forEach((b, i) => {
+                b.classList.toggle('selected', i < rating);
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

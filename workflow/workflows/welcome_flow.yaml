@@ -1,0 +1,148 @@
+name: 欢迎流程
+description: 新用户欢迎和引导流程
+version: 1.0.0
+author: Neshama Team
+
+trigger:
+  type: event
+  event: user_welcome
+  source: system
+
+nodes:
+  - id: trigger_check
+    type: trigger
+    name: 事件触发
+
+  - id: get_user_info
+    type: action
+    name: 获取用户信息
+    action: get_user_profile
+    params:
+      fields: [name, timezone, preferences]
+
+  - id: check_language
+    type: condition
+    name: 检查语言偏好
+    condition: if
+    check:
+      field: user.preferences.language
+      operator: eq
+      value: en
+
+  - id: welcome_cn
+    type: transform
+    name: 中文欢迎语
+    transform: template
+    params:
+      template: |
+        👋 欢迎回来，{{user.name}}！
+        
+        我是你的智能助手 Neshama。
+        
+        我可以帮你：
+        • 📅 管理日程和提醒
+        • 🔔 推送重要通知
+        • 📊 生成各类报告
+        • 💬 回答问题
+        
+        有什么可以帮你的吗？
+
+  - id: welcome_en
+    type: transform
+    name: 英文欢迎语
+    transform: template
+    params:
+      template: |
+        👋 Welcome back, {{user.name}}!
+        
+        I'm your AI assistant Neshama.
+        
+        I can help you with:
+        • 📅 Schedule management
+        • 🔔 Important notifications
+        • 📊 Generate reports
+        • 💬 Answer questions
+        
+        How can I help you today?
+
+  - id: send_welcome
+    type: action
+    name: 发送欢迎消息
+    action: send_message
+    params:
+      channel: ${trigger.channel}
+      template: ${welcome.output}
+
+  - id: setup_preferences
+    type: action
+    name: 初始化偏好设置
+    action: update_user_preferences
+    params:
+      defaults:
+        timezone: ${user.timezone}
+        notification_time: "09:00"
+        language: ${user.preferences.language}
+
+  - id: show_quick_actions
+    type: transform
+    name: 生成快捷操作
+    transform: template
+    params:
+      template: |
+        🔗 快捷操作:
+        
+        1️⃣ 设置每日提醒
+        2️⃣ 查看我的日程
+        3️⃣ 生成周报
+        4️⃣ 自定义工作流
+
+  - id: send_quick_actions
+    type: action
+    name: 发送快捷操作
+    action: send_message
+    params:
+      channel: ${trigger.channel}
+      template: ${show_quick_actions.output}
+      quick_replies:
+        - label: 设置提醒
+          action: set_reminder
+        - label: 查看日程
+          action: view_schedule
+        - label: 生成周报
+          action: generate_report
+        - label: 创建工作流
+          action: create_workflow
+
+edges:
+  - from: trigger_check
+    to: get_user_info
+
+  - from: get_user_info
+    to: check_language
+
+  - from: check_language
+    to: welcome_cn
+    label: 中文
+    port: output_true
+
+  - from: check_language
+    to: welcome_en
+    label: 英文
+    port: output_false
+
+  - from: welcome_cn
+    to: send_welcome
+    label: 发送
+
+  - from: welcome_en
+    to: send_welcome
+    label: 发送
+
+  - from: send_welcome
+    to: setup_preferences
+
+  - from: setup_preferences
+    to: show_quick_actions
+
+  - from: show_quick_actions
+    to: send_quick_actions

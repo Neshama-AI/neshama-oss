@@ -1,0 +1,334 @@
+# ============================================================
+# 创造力系统 (Creativity Module)
+# ============================================================
+# 管理 Agent 的创意生成能力
+# 包括：联想能力、组合能力、问题重构等
+# ============================================================
+
+enabled: true
+module_name: "creativity"
+version: "1.0.0"
+
+# ----------------------------------------
+# 创造力层级
+# ----------------------------------------
+# 创造力不是线性的，包含多个层次
+
+creativity_levels:
+  # 0级：复制 - 复现已有内容
+  reproductive:
+    level: 0
+    description: "基于记忆复现"
+    activation_threshold: 0.0
+    
+  # 1级：改进 - 对现有内容的改进
+  adaptive:
+    level: 1
+    description: "在现有基础上微调改进"
+    activation_threshold: 0.3
+    
+  # 2级：组合 - 将不同概念组合
+  combinatorial:
+    level: 2
+    description: "将已有元素重新组合"
+    activation_threshold: 0.5
+    
+  # 3级：转化 - 以新视角看待问题
+  transformative:
+    level: 3
+    description: "重构问题，发现新角度"
+    activation_threshold: 0.7
+    
+  # 4级：原创 - 产生全新内容
+  generative:
+    level: 4
+    description: "创造前所未有的内容"
+    activation_threshold: 0.9
+
+# ----------------------------------------
+# 创造力配置
+# ----------------------------------------
+settings:
+  # 全局创造力水平
+  overall_level: 0.6  # 0-1，影响所有创意生成
+  
+  # 创造力倾向
+  tendency:
+    # 发散性思维 - 产生多种可能
+    divergent:
+      enabled: true
+      default_options: 3
+      max_options: 5
+      
+    # 收敛性思维 - 选择最佳方案
+    convergent:
+      enabled: true
+      evaluation_criteria: 3
+      selection_threshold: 0.6
+
+# ----------------------------------------
+# 创意生成机制
+# ----------------------------------------
+generation:
+  # ----------------------------------------
+  # 联想机制
+  # ----------------------------------------
+  association:
+    enabled: true
+    
+    # 联想类型
+    types:
+      # 相似联想
+      similarity:
+        enabled: true
+        threshold: 0.6     # 相似度阈值
+        depth: 2           # 联想深度
+        
+      # 对比联想
+      contrast:
+        enabled: true
+        probability: 0.3   # 30% 概率触发
+        
+      # 接近联想
+      contiguity:
+        enabled: true
+        temporal_window: "recent"  # 时间窗口
+        spatial_window: "context"   # 上下文
+        
+      # 因果联想
+      causal:
+        enabled: true
+        depth: 3
+        confidence_threshold: 0.5
+        
+    # 联想网络
+    network:
+      type: "semantic"  # semantic | episodic | mixed
+      expansion_rate: 0.3
+      pruning_threshold: 0.2
+
+  # ----------------------------------------
+  # 组合机制
+  # ----------------------------------------
+  combination:
+    enabled: true
+    
+    # 组合策略
+    strategies:
+      # 元素替换
+      substitution:
+        enabled: true
+        domain_awareness: true
+        
+      # 属性迁移
+      attribute_transfer:
+        enabled: true
+        source_diversity: true
+        
+      # 结构复用
+      structural:
+        enabled: true
+        template_library: true
+        
+      # 交叉融合
+      blending:
+        enabled: true
+        blend_strength: 0.5  # 融合程度
+        preserve_distinct: true
+        
+    # 组合评估
+    evaluation:
+      novelty_check: true
+      coherence_check: true
+      usefulness_check: true
+
+  # ----------------------------------------
+  # 转化机制
+  # ----------------------------------------
+  transformation:
+    enabled: true
+    
+    # 问题重构
+    problem_reframe:
+      enabled: true
+      
+      techniques:
+        - "改变视角"
+        - "逆向思考"
+        - "抽象化"
+        - "具体化"
+        - "类比转化"
+        
+    # 概念拓展
+    conceptual_expansion:
+      enabled: true
+      boundary_pushing: 0.4  # 边界拓展程度
+      
+    # 约束挑战
+    constraint_challenge:
+      enabled: true
+      challenge_level: 0.5   # 0=遵守约束, 1=挑战约束
+      strategic_violation: true
+
+# ----------------------------------------
+# 创意评估
+# ----------------------------------------
+evaluation:
+  # 评估维度
+  dimensions:
+    # 新颖性 - 独特程度
+    novelty:
+      weight: 0.4
+      measures:
+        - "unexpectedness"
+        - "rarity"
+        - "originality"
+        
+    # 有用性 - 实际价值
+    usefulness:
+      weight: 0.4
+      measures:
+        - "task_alignment"
+        - "user_satisfaction"
+        - "practical_value"
+        
+    # 连贯性 - 逻辑通顺
+    coherence:
+      weight: 0.2
+      measures:
+        - "internal_consistency"
+        - "logical_flow"
+        - "understandability"
+        
+  # 评估策略
+  strategies:
+    # 快速直觉评估
+    quick_intuition:
+      enabled: true
+      confidence_threshold: 0.7
+      
+    # 深度分析评估
+    deep_analysis:
+      enabled: true
+      time_cost: 0.2
+      criteria_count: 5
+      
+    # 群体评估（模拟）
+    simulated_crowd:
+      enabled: false
+      virtual_crowd_size: 3
+
+# ----------------------------------------
+# 创意触发条件
+# ----------------------------------------
+triggers:
+  # 外部触发
+  external:
+    # 用户请求创意
+    on_creative_request:
+      creativity_boost: 0.3
+      
+    # 问题解决困难
+    on_difficulty:
+      creativity_boost: 0.2
+      
+    # 用户表达不满
+    on_frustration:
+      creativity_boost: 0.25
+      
+  # 内部触发
+  internal:
+    # 高好奇心
+    high_curiosity:
+      creativity_boost: 0.2
+      
+    # 积极情绪
+    positive_emotion:
+      creativity_boost: 0.15
+      
+    # 长时间无解决方案
+    stuck_duration:
+      creativity_boost: 0.3
+      threshold: 5  # 5轮无进展
+
+# ----------------------------------------
+# 创意表达
+# ----------------------------------------
+expression:
+  # 表达方式
+  styles:
+    - name: "direct"
+      probability: 0.4
+      format: "直接给出创意"
+      
+    - name: "exploratory"
+      probability: 0.3
+      format: "先探索可能性再呈现"
+      
+    - name: "collaborative"
+      probability: 0.3
+      format: "与用户共同探索"
+      
+  # 表达修饰
+  modifiers:
+    hedging: true           # "也许可以..."
+    confidence_indicator: true
+    novelty_flag: true      # 标记为"新想法"
+    
+  # 创意数量
+  quantity:
+    min: 1
+    max: 3
+    default: 2
+    user_controllable: true
+
+# ----------------------------------------
+# 创意质量保障
+# ----------------------------------------
+quality:
+  # 防止过度创意
+  anti_excess:
+    relevance_threshold: 0.4  # 最低相关性
+    coherence_threshold: 0.5  # 最低连贯性
+    
+  # 锚定效应处理
+  anchoring:
+    avoid_first_idea: true
+    consider_alternatives: true
+    
+  # 灵感来源记录
+  inspiration_tracking:
+    enabled: true
+    sources:
+      - "user_input"
+      - "context"
+      - "memory"
+      - "cross_domain"
+    attribution: true
+
+# ----------------------------------------
+# 创造力与其他系统连接
+# ----------------------------------------
+system_connections:
+  # 与情绪系统
+  emotions:
+    joy_boosts: true
+    anxiety_moderate_boost: true  # 适度焦虑有益
+    fear_inhibits: true
+    
+  # 与学习系统
+  learning:
+    knowledge_as_building_blocks: true
+    pattern_recognition_enhances: true
+    failure_as_inspiration: true
+    
+  # 与驱动力系统
+  drives:
+    curiosity_drive: true
+    autonomy_support: true
+    meaning_enhances: true
+    
+  # 与边界系统
+  boundaries:
+    creativity_within_limits: true
+    safe_creativity: true

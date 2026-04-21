@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Workshop 技能市场 - Neshama{% endblock %}</title>
+    <meta name="description" content="Neshama Agent Workshop - 工匠认证技能交易平台">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="{% static 'workshop/css/workshop.css' %}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Header -->
+    <header class="workshop-header">
+        <div class="container">
+            <div class="header-content">
+                <a href="{% url 'workshop:index' %}" class="logo">
+                    <span class="logo-icon">⚒️</span>
+                    <span class="logo-text">Workshop</span>
+                </a>
+                
+                <nav class="nav-menu">
+                    <a href="{% url 'workshop:index' %}" class="nav-link {% if request.path == '/' %}active{% endif %}">首页</a>
+                    <a href="{% url 'workshop:category_list' %}" class="nav-link {% if '/categories' in request.path %}active{% endif %}">分类</a>
+                    <a href="{% url 'workshop:featured' %}" class="nav-link {% if '/featured' in request.path %}active{% endif %}">精选</a>
+                    <a href="{% url 'workshop:creator_list' %}" class="nav-link {% if '/creators' in request.path %}active{% endif %}">工匠</a>
+                </nav>
+                
+                <div class="header-actions">
+                    <div class="search-box">
+                        <input type="text" placeholder="搜索技能..." class="search-input">
+                        <button class="search-btn">🔍</button>
+                    </div>
+                    
+                    {% if user.is_authenticated %}
+                        <div class="user-menu">
+                            <button class="user-btn">
+                                <img src="{{ user.craftsman_profile.avatar|default:'/static/workshop/img/default-avatar.png' }}" alt="" class="avatar">
+                            </button>
+                            <div class="dropdown-menu">
+                                <a href="{% url 'workshop:my_skills' %}">我的技能</a>
+                                <a href="{% url 'workshop:my_installs' %}">已安装</a>
+                                <a href="{% url 'workshop:creator_profile' %}">创作者中心</a>
+                                <hr>
+                                <a href="{% url 'workshop:publish' %}">发布技能</a>
+                                <a href="{% url 'account_logout' %}">退出</a>
+                            </div>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'account_login' %}" class="btn btn-outline">登录</a>
+                        <a href="{% url 'account_signup' %}" class="btn btn-primary">注册</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="workshop-main">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="workshop-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>关于 Workshop</h4>
+                    <p>Neshama Agent 工匠认证技能市场，汇聚优质 AI 技能解决方案。</p>
+                </div>
+                <div class="footer-section">
+                    <h4>快速链接</h4>
+                    <ul>
+                        <li><a href="{% url 'workshop:about' %}">关于我们</a></li>
+                        <li><a href="{% url 'workshop:creator_guide' %}">工匠指南</a></li>
+                        <li><a href="{% url 'workshop:faq' %}">常见问题</a></li>
+                        <li><a href="{% url 'workshop:terms' %}">服务条款</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>工匠等级</h4>
+                    <div class="level-badge novice">新手工匠</div>
+                    <div class="level-badge skilled">熟练工匠</div>
+                    <div class="level-badge master">大师工匠</div>
+                    <div class="level-badge legend">传奇工匠</div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Neshama Workshop. 工匠精神，品质优先。</p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Scripts -->
+    <script src="{% static 'workshop/js/workshop.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

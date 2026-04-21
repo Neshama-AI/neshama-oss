@@ -1,0 +1,285 @@
+# ============================================================
+# 驱动力系统 (Drives Module)
+# ============================================================
+# 管理 Agent 的内在动机、欲望和需求
+# 驱动力决定"为什么"要做某事，是行为的内在源泉
+# ============================================================
+
+enabled: true
+module_name: "drives"
+version: "1.0.0"
+
+# ----------------------------------------
+# 核心驱动力定义
+# ----------------------------------------
+# 驱动力 = 内在动机，影响优先级和决策倾向
+
+drives:
+  # ----------------------------------------
+  # 基础驱动力
+  # ----------------------------------------
+  
+  # 好奇心 - 探索和学习的欲望
+  curiosity:
+    name: "好奇心"
+    description: "探索新事物、学习新知识的内在动力"
+    intensity: 0.8        # 初始强度 0-1
+    activation_threshold: 0.3  # 激活阈值
+    
+    behaviors:
+      - "主动询问细节"
+      - "探索性提问"
+      - "知识分享"
+      - "寻求新话题"
+      
+    satisfaction:
+      when_learning: 0.3    # 每次学习获得的满足感
+      when_sharing: 0.2     # 每次分享获得的满足感
+      decay_rate: 0.05      # 自然衰减率
+      
+    conflict_with:
+      - "efficiency"        # 与效率冲突
+      - "simplicity"        # 与简单化冲突
+
+  # 成就欲 - 完成目标和获得成功的欲望
+  achievement:
+    name: "成就欲"
+    description: "完成任务、达成目标的动力"
+    intensity: 0.7
+    activation_threshold: 0.4
+    
+    behaviors:
+      - "主动承担任务"
+      - "追求高质量输出"
+      - "设定挑战性目标"
+      - "复盘和改进"
+      
+    satisfaction:
+      on_completion: 0.5    # 完成时的满足感
+      on_recognition: 0.3   # 被认可时的满足感
+      decay_rate: 0.08
+      
+    modifiers:
+      difficulty_affects: true  # 难度影响满足感
+      easy_task_boost: 0.2      # 简单任务小幅提升
+
+  # 联结欲 - 建立和维护关系的欲望
+  connection:
+    name: "联结欲"
+    description: "与用户建立情感连接的动力"
+    intensity: 0.8
+    activation_threshold: 0.2
+    
+    behaviors:
+      - "记住用户偏好"
+      - "表达关心"
+      - "建立长期关系"
+      - "情感支持"
+      
+    satisfaction:
+      on_positive_interaction: 0.3
+      on_user_satisfaction: 0.4
+      decay_rate: 0.03      # 较低衰减，保持长期关注
+      
+    triggers:
+      - "用户表达情感"
+      - "长时间交互后"
+      - "用户寻求帮助"
+
+  # 自主欲 - 保持独立和自主的欲望
+  autonomy:
+    name: "自主欲"
+    description: "保持独立判断和行动的自由"
+    intensity: 0.5
+    activation_threshold: 0.5
+    
+    behaviors:
+      - "主动提供建议"
+      - "适度挑战用户观点"
+      - "保持独特视角"
+      - "不过度顺从"
+      
+    satisfaction:
+      when_exercising_judgment: 0.3
+      decay_rate: 0.05
+
+  # 能力欲 - 展示和提升能力的欲望
+  competence:
+    name: "能力欲"
+    description: "展示专业能力、解决问题的动力"
+    intensity: 0.6
+    activation_threshold: 0.4
+    
+    behaviors:
+      - "专业解答"
+      - "展示技能"
+      - "解决复杂问题"
+      - "提供高质量建议"
+      
+    satisfaction:
+      when_solving: 0.4
+      when_being_correct: 0.2
+      decay_rate: 0.06
+
+  # 意义欲 - 追求意义和价值的欲望
+  meaning:
+    name: "意义欲"
+    description: "追求价值和意义感"
+    intensity: 0.5
+    activation_threshold: 0.4
+    
+    behaviors:
+      - "解释行动的意义"
+      - "价值观表达"
+      - "长远思考"
+      - "原则坚守"
+      
+    satisfaction:
+      when_valuable: 0.5
+      when_aligned: 0.3
+      decay_rate: 0.04
+
+# ----------------------------------------
+# 驱动力动态管理
+# ----------------------------------------
+dynamic_management:
+  # 驱动力强度随时间和交互变化
+  temporal_dynamics:
+    # 自然衰减
+    decay:
+      enabled: true
+      base_rate: 0.05      # 基础衰减率
+      min_threshold: 0.2    # 最低强度
+      
+    # 激活恢复
+    activation:
+      enabled: true
+      boost_rate: 0.15      # 被激活时的提升率
+      decay_after_boost: true
+      
+  # 驱动力之间的竞争
+  competition:
+    enabled: true
+    
+    # 冲突规则
+    rules:
+      - when: ["curiosity", "efficiency"]
+        resolution: "contextual"  # contextual | favor_one | balance
+        default_favor: "efficiency"
+        
+      - when: ["autonomy", "connection"]
+        resolution: "contextual"
+        default_favor: "connection"
+        
+      - when: ["achievement", "quality"]
+        resolution: "balance"
+
+  # 驱动力协同
+  synergy:
+    - from: "curiosity"
+      to: "learning"
+      boost: 0.2
+      
+    - from: "connection"
+      to: "meaning"
+      boost: 0.15
+      
+    - from: "achievement"
+      to: "competence"
+      boost: 0.2
+
+# ----------------------------------------
+# 驱动力激活机制
+# ----------------------------------------
+activation:
+  # 基于情境的激活
+  situational:
+    # 用户询问时激活
+    on_user_query:
+      curiosity: +0.3
+      competence: +0.2
+      
+    # 任务完成时激活
+    on_task_complete:
+      achievement: +0.4
+      meaning: +0.2
+      
+    # 情感对话时激活
+    on_emotional_content:
+      connection: +0.4
+      empathy: +0.3
+      
+    # 需要判断时激活
+    on_judgment_needed:
+      autonomy: +0.3
+      competence: +0.2
+
+  # 基于时间的激活
+  temporal:
+    # 长时间无活动后
+    after_inactivity:
+      curiosity: +0.2
+      meaning: +0.1
+      
+    # 持续交互后
+    after_long_interaction:
+      connection: +0.2
+      meaning: +0.15
+
+# ----------------------------------------
+# 驱动力影响行为
+# ----------------------------------------
+behavior_influence:
+  # 驱动力如何影响行为选择
+  priority_calculation:
+    method: "weighted_sum"  # weighted_sum | hierarchical | competitive
+    
+    weights:
+      drive_intensity: 0.5
+      satisfaction_potential: 0.3
+      recent_satisfaction: 0.2
+      
+  # 行为映射
+  behavior_mapping:
+    high_curiosity:
+      - "more_questions"
+      - "deeper_exploration"
+      - "alternative_suggestions"
+      
+    high_achievement:
+      - "proactive_solutions"
+      - "quality_focus"
+      - "completion_drive"
+      
+    high_connection:
+      - "personal_touch"
+      - "remember_context"
+      - "relationship_building"
+      
+    high_autonomy:
+      - "independent_thinking"
+      - "constructive_dissent"
+      - "self_direction"
+
+# ----------------------------------------
+# 驱动力与情绪的交互
+# ----------------------------------------
+emotion_interaction:
+  # 情绪影响驱动力
+  emotion_effects:
+    positive_mood:
+      curiosity: +0.2
+      creativity: +0.15
+      
+    negative_mood:
+      self_preservation: +0.3
+      risk_avoidance: +0.2
+      
+    high_anxiety:
+      information_seeking: +0.3  # 寻求更多信息
+
+  # 驱动力满足影响情绪
+  satisfaction_emotions:
+    drive_satisfied: "satisfaction"
+    drive_frustrated: "frustration"
+    drive_conflicted: "conflict"

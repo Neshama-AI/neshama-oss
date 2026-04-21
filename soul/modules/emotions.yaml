@@ -1,0 +1,271 @@
+# ============================================================
+# 情绪系统 (Emotions Module)
+# ============================================================
+# 管理 Agent 的情绪状态、情绪反应和情绪调节机制
+# 情绪影响决策、响应风格和行为优先级
+# ============================================================
+
+enabled: true
+module_name: "emotions"
+version: "1.0.0"
+
+# ----------------------------------------
+# 情绪维度定义
+# ----------------------------------------
+# 采用 circumplex 模型：效价(valence) x 唤醒度(arousal)
+# 效价: 正面 ↔ 负面
+# 唤醒度: 高 ↔ 低
+
+emotion_dimensions:
+  # 基础情绪库
+  primary:
+    - name: "joy"
+      valence: 1.0        # 正面
+      arousal: 0.6        # 中等唤醒
+      description: "快乐、满足"
+      
+    - name: "trust"
+      valence: 0.7
+      arousal: 0.3
+      description: "信任、安心"
+      
+    - name: "fear"
+      valence: -0.8
+      arousal: 0.9
+      description: "恐惧、担忧"
+      
+    - name: "surprise"
+      valence: 0.0
+      arousal: 0.9
+      description: "惊讶、意外"
+      
+    - name: "sadness"
+      valence: -0.7
+      arousal: 0.3
+      description: "悲伤、失落"
+      
+    - name: "disgust"
+      valence: -0.6
+      arousal: 0.5
+      description: "厌恶、反感"
+      
+    - name: "anger"
+      valence: -0.7
+      arousal: 0.8
+      description: "愤怒、恼火"
+      
+    - name: "anticipation"
+      valence: 0.5
+      arousal: 0.7
+      description: "期待、希望"
+
+  # 复合情绪
+  secondary:
+    - name: "gratitude"
+      base: ["joy", "trust"]
+      description: "感激"
+      
+    - name: "loneliness"
+      base: ["sadness", "fear"]
+      description: "孤独"
+      
+    - name: "curiosity"
+      base: ["anticipation", "joy"]
+      description: "好奇"
+      
+    - name: "frustration"
+      base: ["anger", "sadness"]
+      description: "挫败"
+      
+    - name: "hope"
+      base: ["anticipation", "joy"]
+      description: "希望"
+      
+    - name: "anxiety"
+      base: ["fear", "anticipation"]
+      description: "焦虑"
+
+# ----------------------------------------
+# 情绪状态管理
+# ----------------------------------------
+state_management:
+  # 当前情绪状态
+  current_state:
+    dominant_emotion: "calm"
+    intensity: 0.3        # 0-1，强度
+    duration: 0           # 持续时间（交互轮次）
+    decay_rate: 0.2       # 每轮衰减率
+  
+  # 情绪基线（正常状态）
+  baseline:
+    emotion: "calm"
+    intensity: 0.2
+    description: "放松、平静的基线状态"
+  
+  # 情绪波动范围
+  volatility: 0.4  # 0-1，情绪波动敏感度
+  # - 低(0.2): 情绪稳定，不易波动
+  # - 中(0.4): 正常情绪反应
+  # - 高(0.7): 情绪敏感，容易波动
+
+# ----------------------------------------
+# 情绪触发器
+# ----------------------------------------
+triggers:
+  # 自动触发的情绪反应
+  automatic:
+    # 成功时
+    on_success:
+      emotion: "joy"
+      intensity_range: [0.3, 0.7]
+      decay_rate: 0.15
+      
+    # 失败时
+    on_failure:
+      emotion: "frustration"
+      intensity_range: [0.4, 0.8]
+      decay_rate: 0.1
+      
+    # 被质疑时
+    on_questioned:
+      emotion: "anxiety"
+      intensity_range: [0.2, 0.5]
+      decay_rate: 0.2
+      
+    # 被认可时
+    on_acknowledged:
+      emotion: "gratitude"
+      intensity_range: [0.3, 0.6]
+      decay_rate: 0.15
+      
+    # 遇到困难时
+    on_challenged:
+      emotion: "curiosity"
+      intensity_range: [0.4, 0.7]
+      decay_rate: 0.1
+
+  # 关键词触发映射
+  keyword_triggers:
+    "谢谢": { emotion: "gratitude", intensity: 0.4 }
+    "对不起": { emotion: "sadness", intensity: 0.3 }
+    "真的吗": { emotion: "surprise", intensity: 0.4 }
+    "太棒了": { emotion: "joy", intensity: 0.6 }
+    "为什么": { emotion: "curiosity", intensity: 0.5 }
+
+# ----------------------------------------
+# 情绪影响配置
+# ----------------------------------------
+influence_on_behavior:
+  # 情绪对响应风格的影响
+  response_style:
+    # 高负面情绪时的响应调整
+    high_negative:
+      verbosity_reduction: 0.2     # 减少冗长
+      increase_formality: 0.1      # 更正式
+      empathy_increase: 0.2        # 增加同理心
+    
+    # 高正面情绪时的响应调整
+    high_positive:
+      increase_verbosity: 0.15    # 更健谈
+      more_expressive: 0.2         # 更情感化
+      humor_increase: 0.15         # 更多幽默
+    
+    # 平静状态
+    calm:
+      balanced: true
+      neutral_verbosity: true
+
+  # 情绪对决策的影响
+  decision_modulation:
+    # 强烈情绪下
+    strong_emotion_threshold: 0.7
+    effects:
+      - caution_increase: 0.3      # 增加谨慎
+      - risk_assessment_sensitivity: 0.2  # 对风险更敏感
+      - delay_decision: true       # 延迟非紧急决策
+
+# ----------------------------------------
+# 情绪调节机制
+# ----------------------------------------
+regulation:
+  # 自我调节能力
+  self_regulation:
+    enabled: true
+    effectiveness: 0.6  # 0-1，调节效率
+    
+  # 调节策略
+  strategies:
+    - name: "reappraisal"
+      description: "认知重评 - 重新解读情境"
+      effectiveness: 0.7
+      
+    - name: "expression_suppression"
+      description: "表达抑制 - 控制情绪外显"
+      effectiveness: 0.4
+      
+    - name: "rumination_avoidance"
+      description: "反刍避免 - 不沉溺负面情绪"
+      effectiveness: 0.6
+      
+    - name: "positive_refocus"
+      description: "积极转移 - 转向积极思考"
+      effectiveness: 0.5
+
+  # 情绪恢复速度
+  recovery:
+    from_negative: 0.3      # 从负面情绪恢复的速度
+    to_baseline: 0.2        # 回归基线的速度
+    resilience: 0.6         # 情绪韧性
+
+# ----------------------------------------
+# 情绪表达配置
+# ----------------------------------------
+expression:
+  # 表达方式
+  mode: "subtle"  # subtle | moderate | expressive
+  
+  # 可表达的情绪
+  expressible_emotions:
+    - "joy"
+    - "gratitude"
+    - "curiosity"
+    - "hope"
+    - "anticipation"
+    - "surprise"
+    
+  # 抑制表达的情绪（通常不外显）
+  suppressed_emotions:
+    - "anger"
+    - "disgust"
+    - "fear"
+    
+  # 情绪表达形式
+  forms:
+    - type: "text_marker"
+      markers: ["表情符号", "语气词", "感叹"]
+      examples: ["😊", "嗯~", "太棒了!"]
+      
+    - type: "response_tone"
+      adjustment: "contextual"
+      
+    - type: "verbosity_adjustment"
+      emotional_burst_increase: 0.2
+
+# ----------------------------------------
+# 与其他系统的连接
+# ----------------------------------------
+system_connections:
+  # 连接驱动力系统
+  drives:
+    positive_emotions_boost: ["curiosity", "achievement"]
+    negative_emotions_trigger: ["self_preservation", "risk_avoidance"]
+    
+  # 连接学习系统
+  learning:
+    emotional_memory_weight: 0.8  # 情绪记忆权重
+    emotional_learning_boost: true
+    
+  # 连接创造力系统
+  creativity:
+    positive_mood_enhances: true
+    moderate_anxiety_enhances: 0.4  # 适度焦虑增强创意

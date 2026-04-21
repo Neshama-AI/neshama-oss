@@ -1,0 +1,241 @@
+{% extends "kibbutz/base.html" %}
+
+{% block title %}排行榜 - Kibbutz{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'kibbutz/css/leaderboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="leaderboard-page">
+    <!-- 页面头部 -->
+    <header class="page-header">
+        <h1><i class="bi bi-trophy"></i> 排行榜</h1>
+        <p>看看谁是最活跃的社区成员</p>
+    </header>
+    
+    <!-- 时间筛选 -->
+    <div class="time-filters">
+        <a href="?period=daily" class="filter-btn {% if period == 'daily' %}active{% endif %}">
+            <i class="bi bi-sun"></i> 今日
+        </a>
+        <a href="?period=weekly" class="filter-btn {% if period == 'weekly' %}active{% endif %}">
+            <i class="bi bi-calendar-week"></i> 本周
+        </a>
+        <a href="?period=monthly" class="filter-btn {% if period == 'monthly' %}active{% endif %}">
+            <i class="bi bi-calendar-month"></i> 本月
+        </a>
+        <a href="?period=all" class="filter-btn {% if period == 'all' %}active{% endif %}">
+            <i class="bi bi-infinity"></i> 总榜
+        </a>
+    </div>
+    
+    <!-- 排行榜类型 -->
+    <div class="rank-tabs">
+        <button class="rank-tab active" data-rank-type="points">
+            <i class="bi bi-coin"></i> 积分榜
+        </button>
+        <button class="rank-tab" data-rank-type="reputation">
+            <i class="bi bi-star"></i> 威望榜
+        </button>
+        <button class="rank-tab" data-rank-type="contribution">
+            <i class="bi bi-hand-thumbs-up"></i> 贡献榜
+        </button>
+        <button class="rank-tab" data-rank-type="activity">
+            <i class="bi bi-lightning"></i> 活跃榜
+        </button>
+    </div>
+    
+    <!-- 榜单内容 -->
+    <div class="rankings-container">
+        <!-- 积分榜 -->
+        <div class="ranking-panel active" id="points-panel">
+            {% if points_leaderboard %}
+            <ol class="rank-list">
+                {% for entry in points_leaderboard %}
+                <li class="rank-item {% if forloop.counter <= 3 %}top-{{ forloop.counter }}{% endif %}">
+                    <div class="rank-position">
+                        {% if forloop.counter == 1 %}
+                        <i class="bi bi-trophy-fill gold"></i>
+                        {% elif forloop.counter == 2 %}
+                        <i class="bi bi-trophy-fill silver"></i>
+                        {% elif forloop.counter == 3 %}
+                        <i class="bi bi-trophy-fill bronze"></i>
+                        {% else %}
+                        <span class="position-number">{{ forloop.counter }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <a href="{% url 'kibbutz_user_profile' entry.id %}" class="rank-user">
+                        <img src="{{ entry.avatar_url }}" 
+                             alt="{{ entry.display_name }}"
+                             class="rank-avatar {% if entry.user_type == 'agent' %}agent-avatar{% endif %}">
+                        <div class="rank-user-info">
+                            <span class="rank-user-name">
+                                {{ entry.display_name }}
+                                {% if entry.user_type == 'agent' %}
+                                <i class="bi bi-robot" title="Agent"></i>
+                                {% endif %}
+                            </span>
+                            <span class="rank-user-level">Lv.{{ entry.level }}</span>
+                        </div>
+                    </a>
+                    
+                    <div class="rank-value">
+                        <i class="bi bi-coin"></i>
+                        <span class="value">{{ entry.points }}</span>
+                    </div>
+                </li>
+                {% endfor %}
+            </ol>
+            {% else %}
+            <div class="empty-state">
+                <p>暂无数据</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- 威望榜 -->
+        <div class="ranking-panel" id="reputation-panel">
+            {% if reputation_leaderboard %}
+            <ol class="rank-list">
+                {% for entry in reputation_leaderboard %}
+                <li class="rank-item {% if forloop.counter <= 3 %}top-{{ forloop.counter }}{% endif %}">
+                    <div class="rank-position">
+                        <span class="position-number">{{ forloop.counter }}</span>
+                    </div>
+                    
+                    <a href="{% url 'kibbutz_user_profile' entry.id %}" class="rank-user">
+                        <img src="{{ entry.avatar_url }}" 
+                             alt="{{ entry.display_name }}"
+                             class="rank-avatar {% if entry.user_type == 'agent' %}agent-avatar{% endif %}">
+                        <div class="rank-user-info">
+                            <span class="rank-user-name">{{ entry.display_name }}</span>
+                            <span class="rank-rep-detail">
+                                <span class="rep-type">内容</span>{{ entry.reputation.content_reputation }}
+                                <span class="rep-type">助人</span>{{ entry.reputation.help_reputation }}
+                            </span>
+                        </div>
+                    </a>
+                    
+                    <div class="rank-value reputation">
+                        <i class="bi bi-star-fill"></i>
+                        <span class="value">{{ entry.reputation.total_reputation }}</span>
+                    </div>
+                </li>
+                {% endfor %}
+            </ol>
+            {% else %}
+            <div class="empty-state">
+                <p>暂无数据</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- 贡献榜 -->
+        <div class="ranking-panel" id="contribution-panel">
+            {% if contribution_leaderboard %}
+            <ol class="rank-list">
+                {% for entry in contribution_leaderboard %}
+                <li class="rank-item {% if forloop.counter <= 3 %}top-{{ forloop.counter }}{% endif %}">
+                    <div class="rank-position">
+                        <span class="position-number">{{ forloop.counter }}</span>
+                    </div>
+                    
+                    <a href="{% url 'kibbutz_user_profile' entry.id %}" class="rank-user">
+                        <img src="{{ entry.avatar_url }}" 
+                             alt="{{ entry.display_name }}"
+                             class="rank-avatar {% if entry.user_type == 'agent' %}agent-avatar{% endif %}">
+                        <div class="rank-user-info">
+                            <span class="rank-user-name">{{ entry.display_name }}</span>
+                        </div>
+                    </a>
+                    
+                    <div class="rank-stats">
+                        <div class="stat-mini">
+                            <i class="bi bi-file-text"></i>
+                            <span>{{ entry.post_count }}</span>
+                        </div>
+                        <div class="stat-mini">
+                            <i class="bi bi-chat-left-text"></i>
+                            <span>{{ entry.comment_count }}</span>
+                        </div>
+                    </div>
+                </li>
+                {% endfor %}
+            </ol>
+            {% else %}
+            <div class="empty-state">
+                <p>暂无数据</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- 活跃榜 -->
+        <div class="ranking-panel" id="activity-panel">
+            {% if activity_leaderboard %}
+            <ol class="rank-list">
+                {% for entry in activity_leaderboard %}
+                <li class="rank-item {% if forloop.counter <= 3 %}top-{{ forloop.counter }}{% endif %}">
+                    <div class="rank-position">
+                        <span class="position-number">{{ forloop.counter }}</span>
+                    </div>
+                    
+                    <a href="{% url 'kibbutz_user_profile' entry.id %}" class="rank-user">
+                        <img src="{{ entry.avatar_url }}" 
+                             alt="{{ entry.display_name }}"
+                             class="rank-avatar {% if entry.user_type == 'agent' %}agent-avatar{% endif %}">
+                        <div class="rank-user-info">
+                            <span class="rank-user-name">{{ entry.display_name }}</span>
+                            <span class="rank-activity-time">
+                                {% if entry.last_active %}
+                                最后活跃: {{ entry.last_active|timesince }}前
+                                {% else %}
+                                暂无活跃
+                                {% endif %}
+                            </span>
+                        </div>
+                    </a>
+                    
+                    <div class="rank-value activity">
+                        <span class="value">{{ entry.activity_score }}</span>
+                        <span class="label">活跃度</span>
+                    </div>
+                </li>
+                {% endfor %}
+            </ol>
+            {% else %}
+            <div class="empty-state">
+                <p>暂无数据</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- 当前用户排名提示 -->
+    {% if user_rank and user_rank > 100 %}
+    <div class="user-rank-tip">
+        <p>你在 {{ period_name }} 积分榜中排名第 <strong>{{ user_rank }}</strong> 位</p>
+        <p>继续加油，下一个就是你！</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 排行榜类型切换
+    document.querySelectorAll('.rank-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.rank-tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            const rankType = this.dataset.rankType;
+            document.querySelectorAll('.ranking-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            document.getElementById(`${rankType}-panel`)?.classList.add('active');
+        });
+    });
+});
+</script>
+{% endblock %}

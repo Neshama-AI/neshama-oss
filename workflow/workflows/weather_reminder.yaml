@@ -1,0 +1,132 @@
+name: 天气提醒
+description: 根据天气情况自动发送提醒
+version: 1.0.0
+author: Neshama Team
+
+trigger:
+  type: schedule
+  cron: "0 7 * * *"
+  timezone: Asia/Shanghai
+
+nodes:
+  - id: trigger_check
+    type: trigger
+    name: 定时触发
+
+  - id: get_weather
+    type: action
+    name: 获取天气
+    action: get_weather
+    params:
+      city: ${config.default_city}
+      days: 1
+
+  - id: check_rain
+    type: condition
+    name: 检查是否下雨
+    condition: if
+    check:
+      field: weather.condition
+      operator: in
+      value: [rain, storm, drizzle]
+
+  - id: get_umbrella_tip
+    type: transform
+    name: 生成雨具提醒
+    transform: template
+    params:
+      template: |
+        🌧️ 今日有雨，记得带伞！
+        天气: {{weather.description}}
+        降水概率: {{weather.precipitation}}%
+        出门请注意安全~
+
+  - id: send_rain_reminder
+    type: action
+    name: 发送雨具提醒
+    action: send_message
+    params:
+      channel: ${config.notify_channel}
+      template: ${get_umbrella_tip.output}
+
+  - id: check_temperature
+    type: condition
+    name: 检查温度
+    condition: if
+    check:
+      field: weather.temperature
+      operator: lt
+      value: 10
+
+  - id: get_clothes_tip
+    type: transform
+    name: 生成穿衣建议
+    transform: template
+    params:
+      template: |
+        🧥 今日降温，记得添衣！
+        当前温度: {{weather.temperature}}°
+        建议: 穿上外套，注意保暖~
+
+  - id: send_clothes_reminder
+    type: action
+    name: 发送穿衣提醒
+    action: send_message
+    params:
+      channel: ${config.notify_channel}
+      template: ${get_clothes_tip.output}
+
+  - id: normal_tip
+    type: transform
+    name: 正常天气提示
+    transform: template
+    params:
+      template: |
+        🌤️ 今日天气良好
+        天气: {{weather.description}}
+        温度: {{weather.temperature}}° / {{weather.temp_max}}°
+        祝你有愉快的一天！
+
+  - id: send_normal_reminder
+    type: action
+    name: 发送正常提醒
+    action: send_message
+    params:
+      channel: ${config.notify_channel}
+      template: ${normal_tip.output}
+
+edges:
+  - from: trigger_check
+    to: get_weather
+
+  - from: get_weather
+    to: check_rain
+
+  - from: check_rain
+    to: get_umbrella_tip
+    label: 是
+    port: output_true
+
+  - from: get_umbrella_tip
+    to: send_rain_reminder
+
+  - from: check_rain
+    to: check_temperature
+    label: 否
+    port: output_false
+
+  - from: check_temperature
+    to: get_clothes_tip
+    label: 是
+    port: output_true
+
+  - from: get_clothes_tip
+    to: send_clothes_reminder
+
+  - from: check_temperature
+    to: normal_tip
+    label: 否
+    port: output_false
+
+  - from: normal_tip
+    to: send_normal_reminder

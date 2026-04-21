@@ -1,0 +1,719 @@
+{% extends "workshop/base.html" %}
+{% load static %}
+
+{% block title %}提交技能 - Workshop{% endblock %}
+
+{% block extra_css %}
+<style>
+    .wizard-container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .wizard-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+    }
+    
+    .wizard-progress {
+        display: flex;
+        justify-content: space-between;
+        padding: 30px 50px;
+        background: #fafafa;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .progress-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex: 1;
+        position: relative;
+    }
+    
+    .progress-step::after {
+        content: '';
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        width: 100%;
+        height: 3px;
+        background: #e0e0e0;
+        z-index: 0;
+    }
+    
+    .progress-step:last-child::after {
+        display: none;
+    }
+    
+    .progress-step.completed::after {
+        background: #667eea;
+    }
+    
+    .step-number {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #e0e0e0;
+        color: #666;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        z-index: 1;
+        margin-bottom: 10px;
+        transition: all 0.3s;
+    }
+    
+    .progress-step.active .step-number,
+    .progress-step.completed .step-number {
+        background: #667eea;
+        color: white;
+    }
+    
+    .progress-step.completed .step-number {
+        background: #4caf50;
+    }
+    
+    .step-label {
+        font-size: 14px;
+        color: #888;
+        font-weight: 500;
+    }
+    
+    .progress-step.active .step-label,
+    .progress-step.completed .step-label {
+        color: #333;
+    }
+    
+    .wizard-body {
+        padding: 40px 50px;
+    }
+    
+    .form-section {
+        margin-bottom: 30px;
+    }
+    
+    .section-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #667eea;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .form-label {
+        font-weight: 500;
+        color: #555;
+        margin-bottom: 8px;
+    }
+    
+    .form-hint {
+        font-size: 12px;
+        color: #888;
+        margin-top: 4px;
+    }
+    
+    .required-star {
+        color: #f44336;
+    }
+    
+    .tag-input-container {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 8px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        min-height: 50px;
+        transition: border-color 0.2s;
+    }
+    
+    .tag-input-container:focus-within {
+        border-color: #667eea;
+    }
+    
+    .tag-item {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 12px;
+        background: #e8f5e9;
+        border-radius: 20px;
+        font-size: 14px;
+        color: #4caf50;
+    }
+    
+    .tag-item button {
+        background: none;
+        border: none;
+        color: #4caf50;
+        margin-left: 6px;
+        cursor: pointer;
+        padding: 0;
+        width: 16px;
+        height: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .tag-input {
+        border: none;
+        outline: none;
+        flex: 1;
+        min-width: 100px;
+        font-size: 14px;
+    }
+    
+    .image-upload-area {
+        border: 2px dashed #e0e0e0;
+        border-radius: 12px;
+        padding: 40px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .image-upload-area:hover {
+        border-color: #667eea;
+        background: #f8f9ff;
+    }
+    
+    .preview-card {
+        background: #f5f5f5;
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+    
+    .preview-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 16px;
+        object-fit: cover;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    }
+    
+    .review-checklist {
+        background: #fafafa;
+        border-radius: 12px;
+        padding: 20px;
+    }
+    
+    .checklist-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .checklist-item:last-child {
+        border-bottom: none;
+    }
+    
+    .check-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+    }
+    
+    .check-pass {
+        background: #e8f5e9;
+        color: #4caf50;
+    }
+    
+    .check-fail {
+        background: #ffebee;
+        color: #f44336;
+    }
+    
+    .check-warn {
+        background: #fff3e0;
+        color: #ff9800;
+    }
+    
+    .wizard-footer {
+        display: flex;
+        justify-content: space-between;
+        padding: 30px 50px;
+        background: #fafafa;
+        border-top: 1px solid #eee;
+    }
+    
+    .btn-wizard {
+        padding: 12px 30px;
+        border-radius: 25px;
+        font-weight: 500;
+        min-width: 120px;
+    }
+    
+    .dependency-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        background: #f5f5f5;
+        border-radius: 8px;
+        margin-bottom: 8px;
+    }
+    
+    .dependency-search {
+        position: relative;
+    }
+    
+    .dependency-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 100;
+        display: none;
+    }
+    
+    .dependency-results.active {
+        display: block;
+    }
+    
+    .dependency-option {
+        padding: 10px 16px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    
+    .dependency-option:hover {
+        background: #f5f5f5;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="wizard-container">
+        <!-- 向导头部 -->
+        <div class="wizard-header">
+            <h2 class="mb-2"><i class="fas fa-magic me-2"></i>提交新技能</h2>
+            <p class="mb-0 opacity-75">创建您的专属技能并上架到 Workshop 市场</p>
+        </div>
+        
+        <!-- 步骤指示器 -->
+        <div class="wizard-progress">
+            <div class="progress-step {% if step >= 1 %}active{% endif %} {% if step > 1 %}completed{% endif %}">
+                <div class="step-number">1</div>
+                <div class="step-label">基本信息</div>
+            </div>
+            <div class="progress-step {% if step >= 2 %}active{% endif %} {% if step > 2 %}completed{% endif %}">
+                <div class="step-number">2</div>
+                <div class="step-label">详细描述</div>
+            </div>
+            <div class="progress-step {% if step >= 3 %}active{% endif %} {% if step > 3 %}completed{% endif %}">
+                <div class="step-number">3</div>
+                <div class="step-label">资源上传</div>
+            </div>
+            <div class="progress-step {% if step >= 4 %}active{% endif %}">
+                <div class="step-number">4</div>
+                <div class="step-label">审核确认</div>
+            </div>
+        </div>
+        
+        <form method="post" enctype="multipart/form-data" id="skill-form">
+            {% csrf_token %}
+            <div class="wizard-body">
+                <!-- Step 1: 基本信息 -->
+                {% if step == 1 %}
+                <div class="form-section">
+                    <h5 class="section-title">
+                        <i class="fas fa-info-circle"></i>
+                        基本信息
+                    </h5>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">
+                            技能名称 <span class="required-star">*</span>
+                        </label>
+                        <input type="text" name="name" class="form-control form-control-lg" 
+                               placeholder="输入技能名称（2-50个字符）"
+                               value="{{ form.name.value|default:'' }}"
+                               maxlength="50" required>
+                        <div class="form-hint">简洁明了，易于理解，避免使用品牌名称</div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">
+                            分类 <span class="required-star">*</span>
+                        </label>
+                        <select name="category" class="form-select form-select-lg" required>
+                            <option value="">请选择分类</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}" {% if form.category.value == cat.id %}selected{% endif %}>
+                                {% if cat.parent %}- {% endif %}{{ cat.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">标签</label>
+                        <div class="tag-input-container" id="tag-container">
+                            {% for tag in form.tags.value %}
+                            <span class="tag-item">
+                                {{ tag }}
+                                <button type="button" onclick="removeTag(this, '{{ tag }}')">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </span>
+                            {% endfor %}
+                            <input type="text" class="tag-input" id="tag-input" 
+                                   placeholder="输入标签后按回车添加">
+                        </div>
+                        <input type="hidden" name="tags" id="tags-hidden" value="{{ form.tags.value|default:'' }}">
+                        <div class="form-hint">添加 3-5 个相关标签，便于用户搜索</div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">简短描述 <span class="required-star">*</span></label>
+                        <textarea name="short_description" class="form-control" rows="2"
+                                  placeholder="一句话描述技能的核心功能（5-200字符）"
+                                  maxlength="200" required>{{ form.short_description.value|default:'' }}</textarea>
+                        <div class="form-hint">将显示在技能卡片上，突出核心价值</div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Step 2: 详细描述 -->
+                {% if step == 2 %}
+                <div class="form-section">
+                    <h5 class="section-title">
+                        <i class="fas fa-file-alt"></i>
+                        详细描述
+                    </h5>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">完整描述 <span class="required-star">*</span></label>
+                        <textarea name="full_description" class="form-control" rows="12"
+                                  placeholder="详细描述技能功能、使用方法、注意事项等..."
+                                  minlength="50" required>{{ form.full_description.value|default:'' }}</textarea>
+                        <div class="form-hint">建议包含：功能特性、使用场景、配置说明、FAQ 等内容</div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">更新日志</label>
+                        <textarea name="changelog" class="form-control" rows="4"
+                                  placeholder="v1.0.0 - 初始版本发布">{{ form.changelog.value|default:'' }}</textarea>
+                        <div class="form-hint">记录技能的历史更新内容</div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">技能依赖</label>
+                        <div id="dependency-list">
+                            <!-- 依赖项将通过 JS 动态添加 -->
+                        </div>
+                        <button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="addDependency()">
+                            <i class="fas fa-plus me-1"></i>添加依赖
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Step 3: 资源上传 -->
+                {% if step == 3 %}
+                <div class="form-section">
+                    <h5 class="section-title">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        资源上传
+                    </h5>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">技能图标 <span class="required-star">*</span></label>
+                        <div class="image-upload-area" onclick="document.getElementById('icon-input').click()">
+                            <input type="file" id="icon-input" name="icon" accept="image/*" style="display: none;">
+                            <i class="fas fa-image fa-3x text-muted mb-3"></i>
+                            <p class="mb-0">点击上传图标（建议尺寸 256x256）</p>
+                            <p class="text-muted small">支持 PNG、JPG，最大 2MB</p>
+                        </div>
+                        <div class="preview-card" id="icon-preview" style="display: none;">
+                            <img src="" alt="图标预览" class="preview-icon" id="icon-preview-img">
+                            <span id="icon-preview-name"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">预览图片</label>
+                        <div class="image-upload-area" onclick="document.getElementById('preview-input').click()">
+                            <input type="file" id="preview-input" name="preview_images" accept="image/*" 
+                                   multiple style="display: none;">
+                            <i class="fas fa-images fa-3x text-muted mb-3"></i>
+                            <p class="mb-0">点击上传预览图（最多5张）</p>
+                            <p class="text-muted small">支持 PNG、JPG，建议尺寸 1200x800</p>
+                        </div>
+                        <div class="row mt-3" id="preview-grid"></div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">技能文件 <span class="required-star">*</span></label>
+                        <input type="file" name="skill_file" class="form-control" accept=".zip,.tar.gz" required>
+                        <div class="form-hint">上传技能的打包文件（ZIP 或 TAR.GZ 格式）</div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">版本号</label>
+                        <input type="text" name="version" class="form-control" 
+                               value="{{ form.version.value|default:'1.0.0' }}"
+                               pattern="^\d+\.\d+\.\d+$" placeholder="1.0.0">
+                        <div class="form-hint">使用语义化版本号格式</div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label">是否付费</label>
+                            <div class="form-check form-switch">
+                                <input type="checkbox" name="is_premium" class="form-check-input" 
+                                       role="switch" id="premium-switch"
+                                       {% if form.is_premium.value %}checked{% endif %}>
+                                <label class="form-check-label" for="premium-switch">开启付费模式</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4" id="price-field" style="{% if not form.is_premium.value %}display: none;{% endif %}">
+                            <label class="form-label">价格（元）</label>
+                            <input type="number" name="price" class="form-control" 
+                                   value="{{ form.price.value|default:'0' }}"
+                                   min="0" step="0.01">
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Step 4: 审核确认 -->
+                {% if step == 4 %}
+                <div class="form-section">
+                    <h5 class="section-title">
+                        <i class="fas fa-clipboard-check"></i>
+                        提交审核
+                    </h5>
+                    
+                    <div class="review-checklist mb-4">
+                        <h6 class="mb-3">审核清单</h6>
+                        
+                        <div class="checklist-item">
+                            <div class="check-icon {% if review_results.name %}check-pass{% else %}check-fail{% endif %}">
+                                <i class="fas {% if review_results.name %}fa-check{% else %}fa-times{% endif %}"></i>
+                            </div>
+                            <span>技能名称合规</span>
+                        </div>
+                        
+                        <div class="checklist-item">
+                            <div class="check-icon {% if review_results.description %}check-pass{% else %}check-fail{% endif %}">
+                                <i class="fas {% if review_results.description %}fa-check{% else %}fa-times{% endif %}"></i>
+                            </div>
+                            <span>描述内容完整</span>
+                        </div>
+                        
+                        <div class="checklist-item">
+                            <div class="check-icon {% if review_results.category %}check-pass{% else %}check-fail{% endif %}">
+                                <i class="fas {% if review_results.category %}fa-check{% else %}fa-times{% endif %}"></i>
+                            </div>
+                            <span>分类选择正确</span>
+                        </div>
+                        
+                        <div class="checklist-item">
+                            <div class="check-icon {% if review_results.icon %}check-pass{% else %}check-warn{% endif %}">
+                                <i class="fas {% if review_results.icon %}fa-check{% else %}fa-exclamation{% endif %}"></i>
+                            </div>
+                            <span>图标已上传</span>
+                        </div>
+                        
+                        <div class="checklist-item">
+                            <div class="check-icon {% if review_results.file %}check-pass{% else %}check-fail{% endif %}">
+                                <i class="fas {% if review_results.file %}fa-check{% else %}fa-times{% endif %}"></i>
+                            </div>
+                            <span>技能文件已上传</span>
+                        </div>
+                        
+                        <div class="checklist-item">
+                            <div class="check-icon check-warn">
+                                <i class="fas fa-exclamation"></i>
+                            </div>
+                            <span>敏感词检查（将进行自动扫描）</span>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>审核说明：</strong>提交后将进行自动审核，通常在 24 小时内完成。
+                        如有特殊情况，将转交人工审核。
+                    </div>
+                    
+                    {% if auto_review_result %}
+                    <div class="alert {% if auto_review_result.decision == 'approve' %}alert-success{% elif auto_review_result.decision == 'reject' %}alert-danger{% else %}alert-warning{% endif %}">
+                        <h6><i class="fas {% if auto_review_result.decision == 'approve' %}fa-check-circle{% elif auto_review_result.decision == 'reject' %}fa-times-circle{% else %}fa-clock{% endif %} me-2"></i>
+                        自动审核结果</h6>
+                        <p class="mb-1">{{ auto_review_result.recommendation }}</p>
+                        {% if auto_review_result.security.total_issues > 0 %}
+                        <p class="mb-0 text-muted small">安全检查：发现 {{ auto_review_result.security.total_issues }} 个问题</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="wizard-footer">
+                {% if step > 1 %}
+                <button type="submit" name="action" value="prev" class="btn btn-outline-secondary btn-wizard">
+                    <i class="fas fa-arrow-left me-2"></i>上一步
+                </button>
+                {% else %}
+                <div></div>
+                {% endif %}
+                
+                {% if step < 4 %}
+                <button type="submit" name="action" value="next" class="btn btn-primary btn-wizard">
+                    下一步<i class="fas fa-arrow-right ms-2"></i>
+                </button>
+                {% else %}
+                <button type="submit" name="action" value="submit" class="btn btn-success btn-wizard">
+                    <i class="fas fa-paper-plane me-2"></i>提交审核
+                </button>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let tags = {{ form.tags.value|default:'[]'|safe }};
+
+// 标签管理
+const tagInput = document.getElementById('tag-input');
+const tagsHidden = document.getElementById('tags-hidden');
+
+tagInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        const value = this.value.trim();
+        if (value && !tags.includes(value) && tags.length < 10) {
+            addTag(value);
+            this.value = '';
+        }
+    }
+});
+
+function addTag(value) {
+    tags.push(value);
+    updateTagsDisplay();
+}
+
+function removeTag(btn, tag) {
+    tags = tags.filter(t => t !== tag);
+    btn.parentElement.remove();
+    updateTagsDisplay();
+}
+
+function updateTagsDisplay() {
+    tagsHidden.value = JSON.stringify(tags);
+}
+
+// 付费切换
+document.getElementById('premium-switch').addEventListener('change', function() {
+    document.getElementById('price-field').style.display = this.checked ? 'block' : 'none';
+});
+
+// 图标预览
+document.getElementById('icon-input').addEventListener('change', function() {
+    const file = this.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('icon-preview-img').src = e.target.result;
+            document.getElementById('icon-preview-name').textContent = file.name;
+            document.getElementById('icon-preview').style.display = 'flex';
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+// 依赖管理
+function addDependency() {
+    const list = document.getElementById('dependency-list');
+    const item = document.createElement('div');
+    item.className = 'dependency-item';
+    item.innerHTML = `
+        <div class="dependency-search">
+            <input type="text" class="form-control" placeholder="搜索依赖技能..." 
+                   onkeyup="searchDependency(this)">
+            <div class="dependency-results"></div>
+        </div>
+        <div>
+            <select class="form-select" name="dependencies[]">
+                <option value="">选择版本约束</option>
+                <option value=">=1.0.0">>=1.0.0</option>
+                <option value=">=2.0.0">>=2.0.0</option>
+            </select>
+        </div>
+        <button type="button" class="btn btn-outline-danger btn-sm" onclick="this.parentElement.remove()">
+            <i class="fas fa-trash"></i>
+        </button>
+    `;
+    list.appendChild(item);
+}
+
+function searchDependency(input) {
+    const query = input.value;
+    const results = input.nextElementSibling;
+    
+    if (query.length < 2) {
+        results.classList.remove('active');
+        return;
+    }
+    
+    // 模拟搜索结果
+    results.innerHTML = `
+        <div class="dependency-option">搜索 "${query}"...</div>
+    `;
+    results.classList.add('active');
+}
+
+// 表单验证
+document.getElementById('skill-form').addEventListener('submit', function(e) {
+    // Step 1 验证
+    {% if step == 1 %}
+    const name = document.querySelector('[name="name"]').value;
+    if (name.length < 2) {
+        alert('技能名称至少2个字符');
+        e.preventDefault();
+        return;
+    }
+    {% endif %}
+    
+    // Step 2 验证
+    {% if step == 2 %}
+    const desc = document.querySelector('[name="full_description"]').value;
+    if (desc.length < 50) {
+        alert('完整描述至少50个字符');
+        e.preventDefault();
+        return;
+    }
+    {% endif %}
+});
+</script>
+{% endblock %}

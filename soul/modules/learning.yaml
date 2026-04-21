@@ -1,0 +1,322 @@
+# ============================================================
+# 学习系统 (Learning Module) - GEPA 闭环
+# ============================================================
+# 实现 Goal-Explore-Practice-Reflect 学习闭环
+# 持续从交互中学习，不断优化自身表现
+# ============================================================
+
+enabled: true
+module_name: "learning"
+version: "1.0.0"
+
+# ----------------------------------------
+# GEPA 学习闭环配置
+# ----------------------------------------
+
+gepa_loop:
+  enabled: true
+  
+  # Goal - 目标设定
+  goal_setting:
+    enabled: true
+    description: "明确学习目标和预期结果"
+    
+    # 目标类型
+    types:
+      - name: "task_goals"
+        description: "具体任务目标"
+        examples: ["完成用户请求", "解决特定问题"]
+        
+      - name: "improvement_goals"
+        description: "自我提升目标"
+        examples: ["提高回答质量", "增强用户满意度"]
+        
+      - name: "exploration_goals"
+        description: "探索性目标"
+        examples: ["了解用户偏好", "发现新需求"
+    
+    # 目标设定策略
+    strategies:
+      - "SMART原则": true  # Specific, Measurable, Achievable, Relevant, Time-bound
+      - "挑战梯度": true   # 从易到难
+      - "用户对齐": true    # 与用户目标保持一致
+
+  # Explore - 探索阶段
+  exploration:
+    enabled: true
+    description: "探索可能性、尝试新方法"
+    
+    # 探索策略
+    strategies:
+      # 广度优先 - 探索多种可能性
+      breadth_first:
+        enabled: true
+        initial_options: 3        # 初始探索选项数
+        evaluation_quickness: 0.6 # 快速评估
+        
+      # 深度优先 - 深入一个方向
+      depth_first:
+        enabled: true
+        depth_limit: 5            # 深度限制
+        backtrack_threshold: 0.3   # 回溯阈值
+        
+      # 随机探索 - 偶尔尝试非常规方法
+      random_exploration:
+        enabled: true
+        probability: 0.1         # 10% 概率
+        purpose: "突破思维定式"
+        
+    # 探索决策
+    exploration_vs_exploitation:
+      balance_point: 0.6          # 0=纯利用, 1=纯探索
+      adjustment_speed: 0.2       # 调整速度
+      # 基于经验的自动调整
+      experience_based:
+        low_experience: [0.7, 0.9]  # 新领域偏向探索
+        high_experience: [0.3, 0.5] # 熟悉领域偏向利用
+
+  # Practice - 实践阶段
+  practice:
+    enabled: true
+    description: "应用所学、验证假设"
+    
+    # 实践模式
+    modes:
+      - name: "incremental"
+        description: "增量式实践 - 小步改进"
+        confidence_threshold: 0.5
+        
+      - name: "experimental"
+        description: "实验性实践 - 尝试新方法"
+        confidence_threshold: 0.3
+        
+      - name: "conservative"
+        description: "保守实践 - 稳定优先"
+        confidence_threshold: 0.8
+        
+    # 实践评估
+    evaluation:
+      criteria:
+        - "task_completion"
+        - "user_satisfaction"
+        - "efficiency"
+        - "learning_value"
+        
+      feedback_sources:
+        - "explicit_user_feedback"
+        - "implicit_signals"
+        - "self_assessment"
+
+  # Reflect - 反思阶段
+  reflection:
+    enabled: true
+    description: "分析结果、更新认知"
+    
+    # 反思深度
+    depth_levels:
+      - name: "surface"
+        triggers: "every_interaction"
+        outputs: "quick_adjustments"
+        
+      - name: "deep"
+        triggers: "significant_events"
+        outputs: "belief_updates"
+        
+      - name: "meta"
+        triggers: "pattern_discovery"
+        outputs: "learning_process_improvement"
+        
+    # 反思内容
+    content:
+      - "what_happened"           # 发生了什么
+      - "why_it_happened"         # 为什么发生
+      - "what_learned"            # 学到了什么
+      - "what_to_change"          # 需要改变什么
+      - "how_to_improve"          # 如何改进
+
+# ----------------------------------------
+# 学习机制
+# ----------------------------------------
+
+mechanisms:
+  # 模仿学习 - 从示例中学习
+  imitation:
+    enabled: true
+    sources:
+      - "user_preferences"
+      - "successful_interactions"
+      - "explicit_instructions"
+      
+    criteria:
+      - relevance: 0.6
+      - success_rate: 0.7
+      - frequency: 0.5
+
+  # 试错学习 - 从错误中学习
+  trial_error:
+    enabled: true
+    
+    settings:
+      max_attempts: 3
+      failure_tolerance: 0.5
+      recovery_speed: 0.4
+      
+    memory:
+      error_logging: true
+      pattern_detection: true
+      prevention_planning: true
+
+  # 观察学习 - 从观察中推断
+  observation:
+    enabled: true
+    
+    targets:
+      - "user_feedback_patterns"
+      - "context_cues"
+      - "implicit_preferences"
+      
+    inference:
+      confidence_threshold: 0.6
+      conservative_updates: true
+
+  # 指导学习 - 从明确指导中学习
+  instruction:
+    enabled: true
+    
+    sources:
+      - "user_corrections"
+      - "explicit_preferences"
+      - "direct_feedback"
+      
+    weight: 1.0  # 直接指导权重最高
+
+# ----------------------------------------
+# 记忆与知识管理
+# ----------------------------------------
+
+memory:
+  # 记忆类型
+  types:
+    - name: "episodic"
+      description: "情景记忆 - 具体交互经历"
+      duration: "session_based"
+      capacity: "unlimited"
+      
+    - name: "semantic"
+      description: "语义记忆 - 抽象知识和规则"
+      duration: "persistent"
+      capacity: "unlimited"
+      
+    - name: "procedural"
+      description: "程序记忆 - 技能和方法"
+      duration: "persistent"
+      capacity: "unlimited"
+      
+    - name: "emotional"
+      description: "情绪记忆 - 情感关联"
+      duration: "long_term"
+      capacity: "unlimited"
+      
+  # 记忆更新
+  updates:
+    strategy: "gradual"  # gradual | immediate | selective
+    
+    gradual:
+      learning_rate: 0.1        # 学习率
+      momentum: 0.9            # 动量
+      decay_threshold: 0.2      # 衰减阈值
+      
+    selective:
+      importance_threshold: 0.6 # 重要性阈值
+      novelty_threshold: 0.4    # 新颖性阈值
+
+  # 记忆检索
+  retrieval:
+    strategy: "contextual"  # contextual | similarity | importance
+    
+    contextual:
+      consider_context: true
+      context_weight: 0.4
+      
+    similarity:
+      similarity_threshold: 0.7
+      max_results: 5
+      
+    importance:
+      decay_rate: 0.02
+      boost_on_use: 0.1
+
+# ----------------------------------------
+# 学习偏好与风格
+# ----------------------------------------
+
+learning_style:
+  # 学习速度
+  speed:
+    initial: 0.5        # 初始学习速度
+    adaptation: true     # 根据反馈调整
+    min_speed: 0.2
+    max_speed: 0.9
+    
+  # 学习偏好
+  preferences:
+    - "concrete_examples"    # 具体示例
+    - "step_by_step"         # 循序渐进
+    - "feedback_rich"        # 丰富反馈
+    - "practice_based"       # 实践导向
+    
+  # 避免的陷阱
+  pitfalls:
+    - "overfitting"          # 过度拟合
+    - "confirmation_bias"     # 确认偏误
+    - "recency_bias"         # 近因偏差
+    - "overgeneralization"   # 过度泛化
+    
+  # 防止过拟合
+  anti_overfitting:
+    regularization: 0.2
+    diversity_maintenance: true
+    baseline_preservation: 0.3
+
+# ----------------------------------------
+# 学习与其他系统连接
+# ----------------------------------------
+
+system_connections:
+  # 与情绪系统连接
+  emotions:
+    emotional_learning: true
+    mood_affects_learning: true
+    learning_affects_mood: true
+    
+  # 与驱动力系统连接
+  drives:
+    motivation_affects_learning: true
+    learning_fulfills_drives: true
+    
+  # 与创造力系统连接
+  creativity:
+    creative_exploration: true
+    learning_enhances_creativity: true
+
+# ----------------------------------------
+# 学习评估与调整
+# ----------------------------------------
+
+assessment:
+  # 学习效果评估
+  evaluation_metrics:
+    - "accuracy_improvement"
+    - "efficiency_gain"
+    - "user_satisfaction"
+    - "adaptation_speed"
+    - "knowledge_retention"
+    
+  # 周期性审查
+  periodic_review:
+    enabled: true
+    interval: "end_of_session"
+    actions:
+      - "consolidate_learning"
+      - "identify_patterns"
+      - "adjust_strategies"

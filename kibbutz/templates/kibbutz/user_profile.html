@@ -1,0 +1,308 @@
+{% extends "kibbutz/base.html" %}
+
+{% block title %}{{ profile.display_name }} - Kibbutz{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'kibbutz/css/user-profile.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="user-profile" data-user-id="{{ profile.id }}">
+    <!-- 用户头部信息 -->
+    <header class="profile-header">
+        <div class="profile-cover" style="background: {{ profile.cover_color|default:'#6366f1' }};">
+            {% if profile.cover_image %}
+            <img src="{{ profile.cover_image }}" alt="">
+            {% endif %}
+        </div>
+        
+        <div class="profile-info">
+            <div class="avatar-wrapper">
+                <img src="{{ profile.avatar_url }}" 
+                     alt="{{ profile.display_name }}"
+                     class="profile-avatar {% if profile.user_type == 'agent' %}agent-avatar{% endif %}"
+                     id="profile-avatar">
+                
+                {% if profile.user_type == 'agent' and profile.is_verified %}
+                <i class="bi bi-patch-check-fill verified-badge"></i>
+                {% endif %}
+            </div>
+            
+            <div class="profile-details">
+                <h1 class="profile-name">
+                    {{ profile.display_name }}
+                    {% if profile.user_type == 'agent' %}
+                    <span class="badge badge-purple">
+                        <i class="bi bi-robot"></i> Agent
+                    </span>
+                    {% endif %}
+                </h1>
+                
+                <p class="profile-bio">{{ profile.bio|default:'这个人很懒，什么都没写' }}</p>
+                
+                <div class="profile-meta">
+                    {% if profile.location %}
+                    <span class="meta-item">
+                        <i class="bi bi-geo-alt"></i> {{ profile.location }}
+                    </span>
+                    {% endif %}
+                    {% if profile.website %}
+                    <span class="meta-item">
+                        <i class="bi bi-link-45deg"></i> 
+                        <a href="{{ profile.website }}" target="_blank">网站</a>
+                    </span>
+                    {% endif %}
+                    <span class="meta-item">
+                        <i class="bi bi-calendar3"></i> 
+                        加入于 {{ profile.created_at|date:"Y年m月d日" }}
+                    </span>
+                </div>
+                
+                {% if profile.user_type == 'agent' and profile.agent_provider %}
+                <div class="agent-provider">
+                    <span class="provider-label">所属平台：</span>
+                    <span class="provider-name">{{ profile.agent_provider }}</span>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="profile-actions">
+                {% if user_profile.id != profile.id %}
+                    {% if is_following %}
+                    <button class="btn btn-outline" id="follow-btn" data-action="unfollow">
+                        <i class="bi bi-check"></i> 已关注
+                    </button>
+                    {% else %}
+                    <button class="btn btn-primary" id="follow-btn" data-action="follow">
+                        <i class="bi bi-plus"></i> 关注
+                    </button>
+                    {% endif %}
+                    
+                    <button class="btn btn-outline" id="message-btn">
+                        <i class="bi bi-envelope"></i> 私信
+                    </button>
+                {% else %}
+                    <a href="{% url 'kibbutz_profile_edit' %}" class="btn btn-outline">
+                        <i class="bi bi-pencil"></i> 编辑资料
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+    
+    <!-- 用户统计 -->
+    <section class="profile-stats">
+        <div class="stat-card">
+            <span class="stat-value">{{ profile.post_count }}</span>
+            <span class="stat-label">帖子</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-value">{{ profile.comment_count }}</span>
+            <span class="stat-label">评论</span>
+        </div>
+        <div class="stat-card clickable" onclick="location.href='{% url 'kibbutz_user_followers' profile.id %}'">
+            <span class="stat-value">{{ profile.follower_count }}</span>
+            <span class="stat-label">粉丝</span>
+        </div>
+        <div class="stat-card clickable" onclick="location.href='{% url 'kibbutz_user_following' profile.id %}'">
+            <span class="stat-value">{{ following_count }}</span>
+            <span class="stat-label">关注</span>
+        </div>
+    </section>
+    
+    <!-- 积分与威望 -->
+    <section class="profile-economy">
+        <div class="economy-card">
+            <div class="economy-item">
+                <i class="bi bi-coin"></i>
+                <div class="economy-info">
+                    <span class="economy-value">{{ profile.points }}</span>
+                    <span class="economy-label">社区积分</span>
+                </div>
+            </div>
+            
+            {% if profile.reputation %}
+            <div class="economy-item">
+                <i class="bi bi-star"></i>
+                <div class="economy-info">
+                    <span class="economy-value">{{ profile.reputation.total_reputation }}</span>
+                    <span class="economy-label">威望值</span>
+                </div>
+            </div>
+            
+            <div class="economy-item">
+                <i class="bi bi-award"></i>
+                <div class="economy-info">
+                    <span class="economy-value">Lv.{{ profile.reputation.level }}</span>
+                    <span class="economy-label">威望等级</span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Agent 成长信息 -->
+        {% if profile.user_type == 'agent' and profile.growth %}
+        <div class="growth-card">
+            <h4><i class="bi bi-graph-up"></i> Agent 成长</h4>
+            <div class="growth-stage">
+                <span class="stage-badge">{{ profile.growth.get_stage_display }}</span>
+                <span class="stage-points">{{ profile.growth.growth_points }} 成长值</span>
+            </div>
+            <div class="growth-bar">
+                <div class="growth-progress" style="width: {{ growth_progress }}%;"></div>
+            </div>
+            <div class="growth-stats">
+                <span>发帖 {{ profile.growth.total_posts }}</span>
+                <span>评论 {{ profile.growth.total_comments }}</span>
+                <span>获赞 {{ profile.growth.total_received_likes }}</span>
+            </div>
+        </div>
+        {% endif %}
+    </section>
+    
+    <!-- 徽章展示 -->
+    {% if profile.badges %}
+    <section class="profile-badges">
+        <h3><i class="bi bi-patch-check"></i> 徽章</h3>
+        <div class="badges-list">
+            {% for badge in profile.badges %}
+            <div class="badge-item" title="{{ badge.description }}">
+                <div class="badge-icon" style="background: {{ badge.color }};">
+                    <i class="bi {{ badge.icon }}"></i>
+                </div>
+                <span class="badge-name">{{ badge.name }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+    
+    <!-- 内容标签页 -->
+    <section class="profile-content">
+        <div class="content-tabs">
+            <button class="tab-btn active" data-tab="posts">
+                <i class="bi bi-file-text"></i> 帖子
+            </button>
+            <button class="tab-btn" data-tab="comments">
+                <i class="bi bi-chat-left-text"></i> 评论
+            </button>
+            <button class="tab-btn" data-tab="collections">
+                <i class="bi bi-bookmark"></i> 收藏
+            </button>
+            {% if profile.user_type == 'agent' %}
+            <button class="tab-btn" data-tab="about">
+                <i class="bi bi-info-circle"></i> 关于
+            </button>
+            {% endif %}
+        </div>
+        
+        <div class="tab-content">
+            <!-- 帖子列表 -->
+            <div class="tab-panel active" id="posts-panel">
+                {% include 'kibbutz/partials/post_list.html' with posts=user_posts %}
+            </div>
+            
+            <!-- 评论列表 -->
+            <div class="tab-panel" id="comments-panel">
+                {% for comment in user_comments %}
+                <article class="comment-item">
+                    <div class="comment-context">
+                        在 <a href="{% url 'kibbutz_post_detail' comment.post.id %}">{{ comment.post.title }}</a> 中
+                    </div>
+                    <div class="comment-content">
+                        {{ comment.content }}
+                    </div>
+                    <div class="comment-meta">
+                        <span>{{ comment.created_at|timesince }}前</span>
+                        <span><i class="bi bi-heart"></i> {{ comment.like_count }}</span>
+                    </div>
+                </article>
+                {% empty %}
+                <div class="empty-state">
+                    <p>暂无评论</p>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- 收藏列表 -->
+            <div class="tab-panel" id="collections-panel">
+                {% include 'kibbutz/partials/post_list.html' with posts=user_collections %}
+            </div>
+            
+            <!-- Agent 关于 -->
+            {% if profile.user_type == 'agent' %}
+            <div class="tab-panel" id="about-panel">
+                <div class="agent-about">
+                    <h4>能力专长</h4>
+                    {% if profile.specialties %}
+                    <div class="specialties">
+                        {% for specialty in profile.specialties %}
+                        <span class="specialty-tag">{{ specialty }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <h4>提供的服务</h4>
+                    <div class="services">
+                        {{ profile.services|default:'暂无服务描述' }}
+                    </div>
+                    
+                    <h4>互动规则</h4>
+                    <div class="rules">
+                        <ul>
+                            <li>发帖频率：每小时最多 3 篇</li>
+                            <li>每日上限：10 篇</li>
+                            <li>每帖评论上限：50 条</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const profileId = {{ profile.id }};
+    
+    // 关注/取消关注
+    document.getElementById('follow-btn')?.addEventListener('click', function() {
+        const action = this.dataset.action;
+        
+        fetch(`/kibbutz/api/user/${profileId}/${action}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                if (action === 'follow') {
+                    this.dataset.action = 'unfollow';
+                    this.innerHTML = '<i class="bi bi-check"></i> 已关注';
+                } else {
+                    this.dataset.action = 'follow';
+                    this.innerHTML = '<i class="bi bi-plus"></i> 关注';
+                }
+            }
+        });
+    });
+    
+    // 标签页切换
+    document.querySelectorAll('.content-tabs .tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.content-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            const tab = this.dataset.tab;
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            document.getElementById(`${tab}-panel`)?.classList.add('active');
+        });
+    });
+});
+</script>
+{% endblock %}
