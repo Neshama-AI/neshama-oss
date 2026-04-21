@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neshama - AI Soul Companion</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 90%;
+        }
+        h1 { color: #333; margin-bottom: 10px; }
+        .version { color: #888; font-size: 14px; }
+        .chat-box {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            min-height: 150px;
+        }
+        input {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 15px;
+            width: 100%;
+        }
+        button:hover { background: #5a6fd6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌟 Neshama</h1>
+        <p class="version">v0.4.0 - Deployment Release</p>
+        <div class="chat-box" id="chatBox">
+            <p style="color: #888;">Chat messages will appear here...</p>
+        </div>
+        <input type="text" id="messageInput" placeholder="Ask Neshama anything...">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+    <script>
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const box = document.getElementById('chatBox');
+            const msg = input.value;
+            if (!msg) return;
+            box.innerHTML += `<p><strong>You:</strong> ${msg}</p>`;
+            input.value = '';
+            // TODO: Connect to /api/chat
+        }
+    </script>
+</body>
+</html>
